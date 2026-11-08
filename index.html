@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko" data-theme="basic">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- CSP-START -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: blob: https:; img-src 'self' data: blob: https: http:; media-src 'self' data: blob: https:; frame-src https:; connect-src 'self' blob: data: https:">
+  <!-- CSP-END -->
+  <title>MyRoom</title>
+  <meta name="theme-color" content="#eef6fb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MyRoom">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="styles.css">
+  <style id="custom-css"></style>
+</head>
+<body>
+  <div class="room" id="room">
+    <aside class="side">
+      <div class="profile" id="profile"></div>
+      <nav class="nav" id="nav" aria-label="menu"></nav>
+      <div class="yt-host" id="ytHost" hidden></div>
+      <div class="mini-player" id="miniPlayer" hidden></div>
+      <div class="side-foot" id="counter"></div>
+    </aside>
+    <div class="content">
+      <header class="topbar">
+        <h1 class="room-title" id="roomTitle">MyRoom</h1>
+        <div class="top-tools">
+          <button type="button" class="mini-timer" id="miniTimer" data-act="nav" data-view="focus" hidden></button>
+          <button type="button" class="btn small" id="quickMemoBtn" data-act="quick-memo"></button>
+        </div>
+      </header>
+      <main class="main" id="main" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <div class="modal-layer" id="modalLayer" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- SCRIPTS-START -->
+  <script src="vendor/html-to-image.js"></script>
+  <script src="vendor/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="fonts/fonts-manifest.js"></script>
+  <script src="i18n.js"></script>
+  <script src="js/assets.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/dday.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/memo.js"></script>
+  <script src="js/excerpt.js"></script>
+  <script src="js/bookmark.js"></script>
+  <script src="js/focus.js"></script>
+  <script src="js/diary.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/music.js"></script>
+  <script src="js/social.js"></script>
+  <script src="js/account.js"></script>
+  <script src="js/custom.js"></script>
+  <script src="js/settings.js"></script>
+  <!-- SCRIPTS-END -->
+</body>
+</html>
