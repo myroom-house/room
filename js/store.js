@@ -106,7 +106,20 @@
     try { await writeLocal(); } catch (e) { console.error('저장 실패', e); }
   }
   // 서버에서 받은 기록으로 바꾸기
+  // 서버 기록으로 바꾸기 전에 지금 상태를 자동 백업 (최근 3개)
+  const bakKey = `myroom-bak:${acct}`;
+  function backups() { try { return JSON.parse(localStorage.getItem(bakKey) || '[]'); } catch (e) { return []; } }
+  function backupNow() {
+    const has = ['todos', 'events', 'memos', 'diary', 'ddays', 'bookmarks'].some((k) => (data[k] || []).length);
+    if (!has) return;
+    let list = backups();
+    list.unshift({ at: new Date().toISOString(), data: JSON.parse(JSON.stringify(data)) });
+    while (list.length) {
+      try { localStorage.setItem(bakKey, JSON.stringify(list.slice(0, 3))); break; } catch (e) { list = list.slice(0, Math.max(0, Math.min(3, list.length) - 1)); if (!list.length) break; }
+    }
+  }
   function replace(next, opts = {}) {
+    backupNow();
     data = merge(DEFAULTS(), next);
     data.settings.lang = 'ko';
     clearTimeout(saveTimer);
@@ -172,6 +185,7 @@
   window.Store = {
     load, get, update, subscribe, exportData, importData, reset, desktop, DEFAULTS, flush, replace, readSaved,
     account: () => acct,
+    backups,
     hadLocal: () => hadLocal,
     meta, setMeta,
     setSyncer: (fn) => { syncer = fn; }

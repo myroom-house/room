@@ -44,23 +44,27 @@
         const serverAt = row.updated_at;
         const serverNewer = !m.syncedAt || serverAt > m.syncedAt;
         const take = () => { Store.replace(row.data); Store.setMeta({ syncedAt: serverAt }); setState('ok'); };
-        if (first && !Store.hadLocal()) { take(); App.toast(t('sync.loaded')); return; }
+        if (first && !Store.hadLocal()) {
+          // 이 기기를 처음 연결할 때: 덮어쓰지 않고 이 기기 기록과 계정 기록을 합쳐요
+          const guest = await Store.readSaved('');
+          if (hasContent(guest)) {
+            Store.replace(App.mergeData(row.data, guest), { dirty: true });
+            Store.setMeta({ syncedAt: serverAt });
+            App.toast(t('sync.merged'));
+            await push();
+          } else { take(); App.toast(t('sync.loaded')); }
+          return;
+        }
         if (!m.dirty) { if (serverNewer) { take(); if (first) App.toast(t('sync.loaded')); } else setState('ok'); return; }
-        // 이 기기와 서버 둘 다 바뀌었으면 더 나중에 고친 쪽으로
-        if (serverNewer && m.changedAt && serverAt > m.changedAt) { take(); return; }
+        // 이 기기와 서버 둘 다 바뀌었으면 합치기
+        if (serverNewer) { Store.replace(App.mergeData(row.data, Store.get()), { dirty: true }); Store.setMeta({ syncedAt: serverAt }); }
         await push();
         return;
       }
       if (first && !Store.hadLocal()) {
-        // 이 계정이 처음이면: 로그인 전에 이 기기에 쓴 기록을 가져올지 물어보기
+        // 계정이 처음이면: 이 기기 기록을 그대로 계정으로
         const guest = await Store.readSaved('');
-        const claimed = localStorage.getItem('myroom-guest-claimed');
-        if (hasContent(guest) && !claimed) {
-          const n = (k) => (guest[k] || []).length;
-          const ok = await App.confirmBox(t('sync.importGuest', { t: n('todos'), d: n('diary'), dd: n('ddays'), m: n('memos') }), t('sync.importYes'));
-          try { localStorage.setItem('myroom-guest-claimed', Store.account()); } catch (e) { /* 무시 */ }
-          if (ok) { const copy = JSON.parse(JSON.stringify(guest)); delete copy.social; Store.replace(copy, { dirty: true }); }
-        }
+        if (hasContent(guest)) { const copy = JSON.parse(JSON.stringify(guest)); delete copy.social; Store.replace(copy, { dirty: true }); App.toast(t('sync.uploaded')); }
       }
       await push();
     };
@@ -74,6 +78,33 @@
     window.addEventListener('online', () => { if (Store.meta().dirty) push(); else pull(false).catch(() => {}); });
     App.syncPull = () => pull(false);
   }
+
+  /* ---------- 두 기록 합치기 (같은 항목은 더 나중에 고친 쪽) ---------- */
+  const LISTS = ['todos', 'routines', 'events', 'memos', 'diary', 'excerpts', 'bookmarks', 'ddays', 'fonts', 'stickers', 'eventCats'];
+  const stamp = (x) => String((x && (x.updatedAt || x.doneAt || x.createdAt)) || '');
+  function unionById(a, b) {
+    const out = (a || []).map((x) => x);
+    const idx = new Map(out.map((x, i) => [x && x.id, i]));
+    for (const y of b || []) {
+      if (!y || y.id == null) continue;
+      if (!idx.has(y.id)) { idx.set(y.id, out.length); out.push(y); }
+      else { const i = idx.get(y.id); if (stamp(y) > stamp(out[i])) out[i] = y; }
+    }
+    return out;
+  }
+  App.mergeData = function (base, other) {
+    const a = JSON.parse(JSON.stringify(base || {}));
+    const b = JSON.parse(JSON.stringify(other || {}));
+    delete b.social;
+    for (const k of LISTS) a[k] = unionById(a[k], b[k]);
+    a.music = a.music || {}; a.music.tracks = unionById(a.music.tracks, b.music && b.music.tracks);
+    a.chat = a.chat || {}; ['saved', 'presets'].forEach((k) => { a.chat[k] = unionById(a.chat[k], b.chat && b.chat[k]); });
+    if (!a.chat.draft && b.chat && b.chat.draft) a.chat.draft = b.chat.draft;
+    a.focusLog = a.focusLog || {};
+    for (const [d, v] of Object.entries(b.focusLog || {})) { const c = a.focusLog[d]; if (!c || (v.minutes || 0) > (c.minutes || 0)) a.focusLog[d] = v; }
+    if (!(a.profile && a.profile.name) && b.profile) a.profile = b.profile;
+    return a;
+  };
 
   // 서버가 돌려준 오류를 알아보기 쉽게
   function errText(e) {
@@ -150,6 +181,11 @@
         ${statusHTML()}
         <p class="hint" style="margin:0">${t('acct.onHint')}</p>
         <div class="row gap-xs wrap"><button class="btn small" data-act="acct-sync">${t('acct.syncNow')}</button><button class="btn small ghost" data-act="acct-logout">${t('acct.logout')}</button></div>
+        <details class="acct-more"><summary>${t('acct.recover')}</summary>
+          <p class="hint">${t('acct.recoverHint')}</p>
+          <div class="row gap-xs wrap"><button class="btn small" data-act="acct-merge-guest">${t('acct.mergeGuest')}</button></div>
+          ${Store.backups().length ? `<span class="label">${t('acct.backups')}</span><ul class="mini-list">${Store.backups().map((b, i) => `<li><span>${new Date(b.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · ${t('acct.bakCount', { t: (b.data.todos || []).length, d: (b.data.diary || []).length })}</span><button class="btn small" data-act="acct-restore" data-i="${i}">${t('acct.bakMerge')}</button></li>`).join('')}</ul>` : ''}
+        </details>
       </div>`;
     }
     const signup = ui.acctMode === 'signup';
@@ -189,6 +225,22 @@
         App.toast(/Invalid login/i.test(msg) ? t('acct.wrong') : /already registered/i.test(msg) ? t('acct.exists') : /confirm/i.test(msg) ? t('acct.notConfirmed') : t('acct.err') + ' ' + msg);
       }
       busy = false;
+    },
+    'acct-merge-guest': async () => {
+      const guest = await Store.readSaved('');
+      if (!hasContent(guest)) { App.toast(t('acct.noGuest')); return; }
+      const n = (k) => (guest[k] || []).length;
+      if (!(await App.confirmBox(t('acct.mergeGuestConfirm', { t: n('todos'), d: n('diary'), dd: n('ddays'), m: n('memos') }), t('acct.mergeGo')))) return;
+      Store.replace(App.mergeData(Store.get(), guest), { dirty: true });
+      if (App.syncNow) await App.syncNow();
+      App.toast(t('acct.mergedDone'));
+    },
+    'acct-restore': async (el) => {
+      const b = Store.backups()[Number(el.dataset.i)];
+      if (!b) return;
+      Store.replace(App.mergeData(Store.get(), b.data), { dirty: true });
+      if (App.syncNow) await App.syncNow();
+      App.toast(t('acct.mergedDone'));
     },
     'acct-sync': async () => { if (App.syncNow) { if (App.syncPull) await App.syncPull().catch(() => {}); if (Store.meta().dirty) await App.syncNow(); App.toast(t('acct.synced')); } },
     'acct-logout': async () => {

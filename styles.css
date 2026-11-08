@@ -1024,3 +1024,6 @@ body.ev-dragging, body.ev-dragging * { cursor: grabbing !important; user-select:
 .sync-badge.fail, .sync-badge.offline { color: #e0485f; }
 .acct-status { flex-wrap: wrap; }
 .acct-err { flex-basis: 100%; font-weight: 500; font-size: 12.5px; color: #c23a52; background: #fdeef1; border-radius: 8px; padding: 8px 10px; margin-top: 4px; }
+.acct-more summary { cursor: pointer; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+.acct-more[open] { display: flex; flex-direction: column; gap: 8px; }
+.acct-more .mini-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
