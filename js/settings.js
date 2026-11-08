@@ -64,7 +64,13 @@
     if (window.myroom && window.myroom.onQuickMemo) window.myroom.onQuickMemo(() => App.A['quick-memo']());
 
     // 웹으로 열었을 때: 오프라인에서도 열리게
-    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(window.myroom && window.myroom.isDesktop)) navigator.serviceWorker.register('sw.js').catch(() => {});
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(window.myroom && window.myroom.isDesktop)) {
+      // 새 버전이 올라오면 한 번 자동으로 새로고침
+      const hadController = !!navigator.serviceWorker.controller;
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; Store.flush().then(() => location.reload()); } });
+      navigator.serviceWorker.register('sw.js').then((r) => r.update()).catch(() => {});
+    }
 
     let day = App.todayStr();
     setInterval(() => { if (App.todayStr() !== day) { day = App.todayStr(); countVisit(); App.renderAll(); } }, 60 * 1000);
