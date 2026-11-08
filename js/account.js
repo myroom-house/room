@@ -32,7 +32,7 @@
         const m = Store.meta();
         Store.setMeta({ syncedAt: at, ...(m.changedAt && m.changedAt > startedAt ? {} : { dirty: false }) });
         setState('ok');
-      } catch (e) { console.warn('동기화 실패', e); setState(navigator.onLine === false ? 'offline' : 'fail'); }
+      } catch (e) { console.warn('동기화 실패', e); App.syncError = errText(e); setState(navigator.onLine === false ? 'offline' : 'fail'); }
       pushing = false;
       if (again) { again = false; push(); }
     };
@@ -65,7 +65,7 @@
       await push();
     };
     startFiles(sb);
-    try { await pull(true); } catch (e) { console.warn('불러오기 실패', e); setState(navigator.onLine === false ? 'offline' : 'fail'); }
+    try { await pull(true); } catch (e) { console.warn('불러오기 실패', e); App.syncError = errText(e); setState(navigator.onLine === false ? 'offline' : 'fail'); }
     Store.setSyncer(() => { clearTimeout(timer); setState('saving'); timer = setTimeout(push, 1500); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') pull(false).catch(() => {});
@@ -73,6 +73,15 @@
     });
     window.addEventListener('online', () => { if (Store.meta().dirty) push(); else pull(false).catch(() => {}); });
     App.syncPull = () => pull(false);
+  }
+
+  // 서버가 돌려준 오류를 알아보기 쉽게
+  function errText(e) {
+    const m = String((e && (e.message || e.error_description || e.hint)) || e || '');
+    if (/user_data/.test(m) && /(does not exist|schema cache|not find)/i.test(m)) return t('acct.errNoTable');
+    if (/permission denied|row-level security|42501/i.test(m)) return t('acct.errPerm');
+    if (/JWT|token|401/i.test(m)) return t('acct.errLogin');
+    return m.slice(0, 160);
   }
 
   /* ---------- 사진·스티커·글꼴 파일 동기화 ---------- */
@@ -130,7 +139,7 @@
     const m = Store.meta();
     const st = App.syncState || (m.dirty ? 'saving' : 'ok');
     const when = m.syncedAt ? new Date(m.syncedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-    return `<div class="acct-status ${st}" id="acctStatus"><i></i>${t('acct.st.' + st)}${when && st === 'ok' ? ` <span class="muted small">· ${t('acct.lastSync', { w: when })}</span>` : ''}</div>`;
+    return `<div class="acct-status ${st}" id="acctStatus"><i></i>${t('acct.st.' + st)}${when && st === 'ok' ? ` <span class="muted small">· ${t('acct.lastSync', { w: when })}</span>` : ''}${st === 'fail' && App.syncError ? `<div class="acct-err">${esc(App.syncError)}</div>` : ''}</div>`;
   }
   App.accountCard = function () {
     if (!ready()) return `<div class="card"><h3>${t('acct.title')}</h3><p class="hint" style="margin:0">${t('acct.noServer')}</p></div>`;

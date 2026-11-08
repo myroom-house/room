@@ -1022,3 +1022,5 @@ body.ev-dragging, body.ev-dragging * { cursor: grabbing !important; user-select:
 .sync-badge { display: block; width: calc(100% - 8px); margin: 8px 4px 0; border: 0; background: none; text-align: left; font-size: 11.5px; color: var(--ink-soft); cursor: pointer; padding: 2px 6px; border-radius: 6px; }
 .sync-badge:hover { background: var(--paper-2); }
 .sync-badge.fail, .sync-badge.offline { color: #e0485f; }
+.acct-status { flex-wrap: wrap; }
+.acct-err { flex-basis: 100%; font-weight: 500; font-size: 12.5px; color: #c23a52; background: #fdeef1; border-radius: 8px; padding: 8px 10px; margin-top: 4px; }
