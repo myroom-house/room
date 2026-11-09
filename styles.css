@@ -308,7 +308,9 @@ textarea.home-capture { resize: none; overflow: hidden; margin-top: 0; font-size
 .memo-text { flex: 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; line-height: 1.6; cursor: text; }
 .memo-meta { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
 .memo-meta .icon-btn { width: 28px; height: 28px; opacity: 0; }
-.memo-meta .icon-btn.on, .memo-item:hover .memo-meta .icon-btn, .memo-item:focus-within .memo-meta .icon-btn { opacity: 1; }
+.memo-meta .icon-btn.on, .memo-item:hover .memo-meta .icon-btn, .memo-item:focus-within .memo-meta .icon-btn, .memo-meta [data-act="memo-edit-open"] { opacity: 1; }
+@media (hover: none) { .memo-meta .icon-btn { opacity: 1; } }
+.memo-meta [data-act="memo-edit-open"] { color: var(--ink-soft); }
 .memo-meta .muted { margin-right: 6px; }
 .memo-editing { min-height: 60px; flex: 1; }
 

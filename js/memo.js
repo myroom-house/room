@@ -35,7 +35,6 @@
       ? `<div class="memo-check">
           ${m.body ? `<b>${esc(m.body)}</b>` : ''}
           <ul>${m.items.map((i) => `<li class="${i.done ? 'done' : ''}"><input type="checkbox" class="check" data-change="memo-item-toggle" data-id="${m.id}" data-i="${i.id}" ${i.done ? 'checked' : ''} aria-label="${esc(i.text)}"><span>${esc(i.text)}</span><button class="icon-btn tiny hover-only" data-act="memo-item-del" data-id="${m.id}" data-i="${i.id}" aria-label="${t('c.delete')}">${svg('x')}</button></li>`).join('')}</ul>
-          <input class="input quick tiny" data-enter="memo-item-add" data-id="${m.id}" placeholder="${esc(t('memo.addItem'))}">
         </div>`
       : `<div class="memo-text" data-act="memo-edit" data-id="${m.id}">${m.title ? `<b>${esc(m.title)}</b>\n` : ''}${esc(m.body)}</div>`;
     return `<li class="memo-item ${m.pinned ? 'pinned' : ''} ${allDone(m) ? 'all-done' : ''}">
@@ -47,6 +46,7 @@
         <label class="icon-btn due-btn" title="${t('memo.setDue')}">📅<input type="date" value="${esc(m.due || '')}" data-change="memo-due" data-id="${m.id}"></label>
         ${m.due ? `<button class="icon-btn" data-act="memo-due-clear" data-id="${m.id}" title="${t('memo.clearDue')}">${svg('x')}</button>` : ''}
         <button class="icon-btn ${m.pinned ? 'on' : ''}" data-act="memo-pin" data-id="${m.id}" title="${m.pinned ? t('memo.unpin') : t('memo.pin')}" aria-pressed="${!!m.pinned}">${svg('pin')}</button>
+        <button class="icon-btn" data-act="memo-edit-open" data-id="${m.id}" title="${t('c.edit')}" aria-label="${t('c.edit')}">${svg('edit')}</button>
         <button class="icon-btn" data-act="memo-copy" data-id="${m.id}" title="${t('c.copy')}">${svg('copy')}</button>
         <button class="icon-btn" data-act="memo-del" data-id="${m.id}" title="${t('c.delete')}">${svg('trash')}</button>
       </div>
@@ -136,6 +136,60 @@
           if (v !== ((x.title ? x.title + '\n' : '') + x.body)) { x.title = ''; x.body = v; x.updatedAt = nowISO(); }
         });
       }, { once: true });
+    },
+    // 메모 수정 창 (글 메모·체크리스트 모두)
+    'memo-edit-open': (el) => {
+      const m = App.D.memos.find((x) => x.id === el.dataset.id);
+      if (!m) return;
+      const check = m.kind === 'check';
+      const head = check ? m.body || '' : m.title || '';
+      const content = check ? m.items.map((i) => i.text).join('\n') : m.body || '';
+      App.openModal(`
+        <h3 class="modal-title">${t('memo.editTitle')}</h3>
+        <div class="seg small" style="align-self:flex-start;margin-bottom:10px">${[['text', t('memo.kindText')], ['check', t('memo.kindCheck')]].map(([k, l]) => `<button type="button" data-act="memo-edit-kind" data-v="${k}" aria-pressed="${m.kind === k}">${l}</button>`).join('')}</div>
+        <input class="input" id="memoEditHead" maxlength="80" value="${esc(head)}" placeholder="${esc(t('memo.editHeadPh'))}">
+        <textarea class="input" id="memoEditBody" rows="8" style="margin-top:8px" placeholder="${esc(check ? t('memo.editItemsPh') : t('memo.editBodyPh'))}">${esc(content)}</textarea>
+        <p class="hint" id="memoEditHint" style="margin:6px 0 0">${check ? t('memo.editItemsHint') : ''}</p>
+        <div class="modal-actions"><span></span>
+          <div class="row"><button class="btn" data-act="modal-close">${t('c.cancel')}</button><button class="btn primary" data-act="memo-edit-save" data-id="${m.id}" data-kind="${m.kind}">${t('c.save')}</button></div></div>`, null, 'small');
+      const ta = App.$('#memoEditBody'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    },
+    'memo-edit-kind': (el) => {
+      App.$$('[data-act="memo-edit-kind"]').forEach((b) => b.setAttribute('aria-pressed', b === el));
+      const save = App.$('[data-act="memo-edit-save"]'); if (save) save.dataset.kind = el.dataset.v;
+      const check = el.dataset.v === 'check';
+      App.$('#memoEditBody').placeholder = check ? t('memo.editItemsPh') : t('memo.editBodyPh');
+      App.$('#memoEditHint').textContent = check ? t('memo.editItemsHint') : '';
+    },
+    'memo-edit-save': (el) => {
+      const id = el.dataset.id, kind = el.dataset.kind;
+      const head = App.$('#memoEditHead').value.trim();
+      const body = App.$('#memoEditBody').value;
+      App.update((d) => {
+        const x = findM(d, id);
+        if (!x) return;
+        if (kind === 'check') {
+          const lines = body.split('\n').map((l) => l.replace(/^\s*([-*•]|\[[ xX]?\]|☐|☑)\s*/, '').trim()).filter(Boolean);
+          const old = x.kind === 'check' ? x.items : [];
+          const used = new Set();
+          x.items = lines.map((text, i) => {
+            let prev = old.find((o) => o.text === text && !used.has(o.id));
+            if (!prev && old[i] && !used.has(old[i].id)) prev = old[i];
+            if (prev) used.add(prev.id);
+            return { id: prev ? prev.id : uid(), text, done: prev ? !!prev.done : false };
+          });
+          x.body = head; x.title = '';
+        } else {
+          const wasCheck = x.kind === 'check';
+          x.title = head;
+          x.body = wasCheck && body === x.items.map((i) => i.text).join('\n') ? body : body.trim();
+          x.items = [];
+        }
+        x.kind = kind;
+        x.updatedAt = nowISO();
+      });
+      App.closeModal();
+      App.toast(t('c.saved'));
     },
     'quick-memo': () => {
       App.openModal(`
