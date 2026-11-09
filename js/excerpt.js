@@ -120,9 +120,11 @@
     if (b.pattern === 'diagonal') return `background-image:repeating-linear-gradient(45deg, ${c} 0 ${s * 0.25}px, transparent ${s * 0.25}px ${s * 0.6}px);`;
     if (b.pattern === 'grid') return `background-image:linear-gradient(${c} 1.5px, transparent 1.5px),linear-gradient(90deg, ${c} 1.5px, transparent 1.5px);background-size:${s}px ${s}px;`;
     if (b.pattern === 'heart') {
-      const hex = encodeURIComponent(b.pColor);
-      const svgH = `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}' viewBox='0 0 24 24'><path fill='${hex}' fill-opacity='${b.pAlpha / 100}' d='M12 20s-7-4.4-7-9.2A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.8C19 15.6 12 20 12 20z'/></svg>`;
-      return `background-image:url("data:image/svg+xml,${svgH}");background-size:${s}px ${s}px;`;
+      // style="..." 안에 들어가니 따옴표·괄호까지 전부 인코딩해야 하트가 떠요
+      const col = /^#[0-9a-f]{3,8}$/i.test(b.pColor || '') ? b.pColor : '#e58fa8';
+      const svgH = `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}' viewBox='0 0 24 24'><path fill='${col}' fill-opacity='${b.pAlpha / 100}' d='M12 20.5s-7.5-4.8-7.5-10.2A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.7c0 5.4-7.5 10.2-7.5 10.2z'/></svg>`;
+      const enc = encodeURIComponent(svgH).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
+      return `background-image:url(data:image/svg+xml,${enc});background-size:${s}px ${s}px;`;
     }
     return '';
   }
