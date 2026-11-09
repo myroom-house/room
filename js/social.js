@@ -292,7 +292,7 @@
     return '';
   }
   const avatar = (p, cls = '') => `<span class="so-av ${cls}">${p && p.avatar_url ? `<img src="${esc(App.safeImg(p.avatar_url))}" alt="">` : esc(((p && p.name) || '?').charAt(0))}</span>`;
-  const todayTodosForPage = (d) => (d.todos.auto ? App.todayTodos().map((x) => ({ text: x.text, done: x.done })) : d.todos.items);
+  const todayTodosForPage = (d) => (d.todos.auto ? App.todayTodos().map((x) => ({ text: x.text, done: !!x.done })) : d.todos.items);
 
   function pageHTML(v, opts = {}) {
     const d = v.data || {};
@@ -730,6 +730,32 @@
       refresh();
     })
   });
+  /* ---------- 할 일 바로 연동 ---------- */
+  // '할 일에서 자동으로' 가 켜져 있으면, 할 일을 고칠 때마다 게시된 페이지의 투두만 바로 바꿔요
+  let todoSig = null, todoBusy = false;
+  async function syncTodos() {
+    if (todoBusy || ui.so.demo) return;
+    const D = App.D;
+    if (!D || (D.social && D.social.draft && D.social.draft.todos && !D.social.draft.todos.auto)) return;
+    if (!navigator.onLine || !Sb.configured()) return;
+    const items = App.todayTodos().map((x) => ({ text: x.text, done: !!x.done }));
+    const sig = JSON.stringify(items);
+    if (sig === todoSig) return;
+    todoBusy = true;
+    try {
+      const u = await Sb.me();
+      if (!u) return;
+      const page = await Sb.getPage(u.id);
+      if (!page || !page.data) { todoSig = sig; return; } // 아직 게시한 적 없으면 그대로
+      if (JSON.stringify((page.data.todos || {}).items || []) === sig) { todoSig = sig; return; }
+      page.data.todos = { auto: true, items };
+      const { error } = await Sb.client().from('social_pages').upsert({ owner: u.id, data: page.data, updated_at: new Date().toISOString() });
+      if (!error) todoSig = sig;
+    } catch (e) { /* 다음에 다시 */ } finally { todoBusy = false; }
+  }
+  setInterval(syncTodos, 3000);
+  window.addEventListener('online', syncTodos);
+
   Object.assign(App.C, {
     'so-bgm-pick': busy(async (el) => {
       const d = S().draft;
