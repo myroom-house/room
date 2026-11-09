@@ -199,7 +199,8 @@
       body = `
         <div class="tb-sec">
           <div class="row" style="justify-content:space-between"><span class="label">${t('dk.myStickers')}</span><button class="btn small" data-act="dk-upload-sticker">${svg('upload')}${t('dk.upload')}</button></div>
-          ${D().stickers.length ? `<div class="sticker-grid">${D().stickers.map((s) => `<div class="sticker-cell"><button type="button" class="sticker-btn" data-act="dk-add-sticker" data-id="${s.id}" title="${esc(s.name || '')}"><img data-asset="${esc(s.assetId)}" alt=""></button><button type="button" class="sticker-x" data-act="dk-del-sticker" data-id="${s.id}" aria-label="${t('c.delete')}">×</button></div>`).join('')}</div>` : `<p class="hint">${t('dk.myStickersHint')}</p>`}
+          ${D().stickers.length ? App.stickerFolderBar('diary') : ''}
+          ${App.stickersInView().length ? `<div class="sticker-grid">${App.stickersInView().map((s) => `<div class="sticker-cell" data-stk-drag="${s.id}"><button type="button" class="sticker-btn" data-act="dk-add-sticker" data-id="${s.id}" title="${esc(s.name || '')}"><img data-asset="${esc(s.assetId)}" alt=""></button><button type="button" class="sticker-x" data-act="dk-del-sticker" data-id="${s.id}" aria-label="${t('c.delete')}">×</button></div>`).join('')}</div>` : `<p class="hint">${D().stickers.length ? t('stk.emptyFolder') : t('dk.myStickersHint')}</p>`}
         </div>`;
     } else if (ui.dkTab === 'photo') {
       body = `<div class="tb-sec"><button class="btn primary block" data-act="dk-upload-photo">${svg('image')}${t('dk.addPhoto')}</button><p class="hint">${t('dk.photoHint')}</p></div>`;
@@ -606,16 +607,8 @@
       }
     },
     'dk-upload-sticker': async () => {
-      const picked = await App.pickFiles('image/png,image/gif', true);
-      const files = picked.filter((f) => f.type === 'image/png' || f.type === 'image/gif' || /\.(png|gif)$/i.test(f.name));
-      if (picked.length > files.length) App.toast(t('dk.stickerOnly'));
-      for (const f of files) {
-        const blob = f.type === 'image/gif' ? f : await Assets.shrinkImage(f, 800, true);
-        const id = 's_' + uid();
-        await Assets.put(id, blob);
-        App.silent((d) => d.stickers.push({ id: uid(), assetId: id, name: f.name }));
-      }
-      if (files.length) { App.renderMain(); App.toast(t('dk.stickersAdded', { n: files.length })); }
+      const added = await App.uploadStickers();
+      if (added.length) { App.renderMain(); App.toast(t('dk.stickersAdded', { n: added.length })); }
     },
     'dk-del-sticker': async (el) => {
       const s = D().stickers.find((x) => x.id === el.dataset.id);

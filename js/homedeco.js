@@ -17,7 +17,7 @@
       const blob = f.type === 'image/gif' ? f : await Assets.shrinkImage(f, 800, true);
       const id = 's_' + uid();
       await Assets.put(id, blob);
-      const s = { id: uid(), assetId: id, name: f.name };
+      const s = { id: uid(), assetId: id, name: f.name, folder: App.stickerUploadFolder ? App.stickerUploadFolder() : '' };
       App.silent((d) => { d.stickers = d.stickers || []; d.stickers.push(s); });
       added.push(s);
     }
@@ -100,7 +100,8 @@
     App.openModal(`
       <h3 class="modal-title">${t('hs.pickTitle')}</h3>
       <button class="btn primary block" data-act="hs-upload">${svg('upload')}${t('hs.upload')}</button>
-      ${lib().length ? `<div class="hs-lib">${lib().map((s) => `<button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" title="${esc(s.name || '')}"><img data-asset="${esc(s.assetId)}" alt=""></button>`).join('')}</div>` : `<p class="hint">${t('hs.libEmpty')}</p>`}
+      ${lib().length ? App.stickerFolderBar('modal') : ''}
+      ${App.stickersInView().length ? `<div class="hs-lib">${App.stickersInView().map((s) => `<button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" data-stk-drag="${s.id}" title="${esc(s.name || '')}"><img data-asset="${esc(s.assetId)}" alt=""></button>`).join('')}</div>` : `<p class="hint">${lib().length ? t('stk.emptyFolder') : t('hs.libEmpty')}</p>`}
       <p class="hint" style="margin:8px 0 0">${t('hs.pickHint')}</p>
       <div class="modal-actions"><span></span><button class="btn" data-act="modal-close">${t('c.close')}</button></div>`, null, 'small');
     App.hydrateAssets(App.$('#modalLayer'));
@@ -141,7 +142,8 @@
           <button class="btn small primary" data-act="hs-start">${t('hs.start')}</button>
         </div></div>
       <p class="hint" style="margin:0 0 10px">${t('hs.cardHint', { n: list().length })}</p>
-      ${lib().length ? `<div class="hs-lib">${lib().map((s) => `<div class="hs-lib-item"><button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" title="${t('hs.putHome')}"><img data-asset="${esc(s.assetId)}" alt=""></button><button type="button" class="hs-lib-x" data-act="hs-lib-del" data-asset="${esc(s.assetId)}" aria-label="${t('c.delete')}">×</button></div>`).join('')}</div>` : `<p class="muted small" style="margin:0">${t('hs.libEmpty')}</p>`}
+      ${App.stickerFolderBar('manage')}
+      ${App.stickersInView().length ? `<div class="hs-lib">${App.stickersInView().map((s) => `<div class="hs-lib-item ${App.ui.stkSel.has(s.id) ? 'sel' : ''}" data-stk-drag="${s.id}"><button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" title="${t('hs.putHome')}"><img data-asset="${esc(s.assetId)}" alt=""></button>${App.ui.stkSelect ? `<span class="hs-check">${App.ui.stkSel.has(s.id) ? '✓' : ''}</span>` : `<button type="button" class="hs-lib-x" data-act="hs-lib-del" data-asset="${esc(s.assetId)}" aria-label="${t('c.delete')}">×</button>`}</div>`).join('')}</div>` : `<p class="muted small" style="margin:0">${lib().length ? t('stk.emptyFolder') : t('hs.libEmpty')}</p>`}
       ${list().length ? `<button class="link-btn" style="margin-top:8px" data-act="hs-clear">${t('hs.clear')}</button>` : ''}
     </div>`;
   };
