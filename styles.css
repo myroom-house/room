@@ -1035,3 +1035,20 @@ body.ev-dragging, body.ev-dragging * { cursor: grabbing !important; user-select:
 .acct-more summary { cursor: pointer; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
 .acct-more[open] { display: flex; flex-direction: column; gap: 8px; }
 .acct-more .mini-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+
+/* ===== 테마별 바탕 패턴 ===== */
+:root:not([data-theme="editor"]) .side { background: color-mix(in srgb, var(--paper) 86%, transparent); }
+/* 기본: 회색 작은 점 */
+[data-theme="basic"] body { background-image: radial-gradient(rgba(36, 39, 46, .1) 1px, transparent 1.3px); background-size: 18px 18px; }
+/* 하늘: 엇갈린 파란 점 */
+[data-theme="sky"] body { background-image: radial-gradient(rgba(58, 134, 224, .3) 1.3px, transparent 1.7px), radial-gradient(rgba(58, 134, 224, .18) 1px, transparent 1.4px); background-size: 28px 28px, 28px 28px; background-position: 0 0, 14px 14px; }
+/* 딸기우유: 작은 하트 */
+[data-theme="strawberry"] body { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'%3E%3Cpath fill='%23e46b92' fill-opacity='.13' d='M9 12.5c-1.2-1.6-4-1.2-4 1 0 1.8 2.2 3.2 4 4.7 1.8-1.5 4-2.9 4-4.7 0-2.2-2.8-2.6-4-1z'/%3E%3Cpath fill='%23e46b92' fill-opacity='.08' d='M26 27.5c-1-1.3-3.2-1-3.2.8 0 1.4 1.8 2.6 3.2 3.8 1.4-1.2 3.2-2.4 3.2-3.8 0-1.8-2.2-2.1-3.2-.8z'/%3E%3C/svg%3E"); background-size: 34px 34px; }
+/* 민트: 옅은 사선 줄무늬 */
+[data-theme="mint"] body { background-image: repeating-linear-gradient(135deg, rgba(42, 157, 127, .06) 0 2px, transparent 2px 14px); }
+/* 종이: 모눈 노트 */
+[data-theme="paper"] body { background-image: linear-gradient(rgba(122, 106, 82, .09) 1px, transparent 1px), linear-gradient(90deg, rgba(122, 106, 82, .09) 1px, transparent 1px); background-size: 22px 22px; }
+/* 다크: 작은 별빛 */
+[data-theme="night"] body { background-image: radial-gradient(rgba(255, 255, 255, .22) 1px, transparent 1.4px), radial-gradient(rgba(142, 168, 255, .25) 1px, transparent 1.4px), radial-gradient(rgba(255, 255, 255, .12) .8px, transparent 1.2px); background-size: 90px 90px, 130px 130px, 47px 47px; background-position: 0 0, 40px 60px, 20px 10px; }
+/* 크리스마스: 눈송이 */
+[data-theme="christmas"] body { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg stroke='%231e3a2b' stroke-opacity='.13' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M14 8v12M8 14h12M9.8 9.8l8.4 8.4M18.2 9.8l-8.4 8.4'/%3E%3C/g%3E%3Cg stroke='%23c8323c' stroke-opacity='.12' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M42 37v8M38 41h8M39.2 38.2l5.6 5.6M44.8 38.2l-5.6 5.6'/%3E%3C/g%3E%3Ccircle cx='40' cy='12' r='1.2' fill='%231e3a2b' fill-opacity='.12'/%3E%3Ccircle cx='12' cy='42' r='1.2' fill='%23c8323c' fill-opacity='.12'/%3E%3C/svg%3E"); background-size: 56px 56px; }
