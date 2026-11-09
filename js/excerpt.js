@@ -38,6 +38,7 @@
     if (!D.chat.draft) D.chat.draft = DEFAULT();
     const d = D.chat.draft, base = DEFAULT();
     DROP.forEach((k) => { delete d[k]; });
+    if (d.align === 'justify') d.align = 'left';
     if (OLD_THEME[d.theme]) d.theme = OLD_THEME[d.theme];
     for (const k of Object.keys(base)) if (d[k] == null) d[k] = base[k];
     for (const k of Object.keys(base.bg)) if (d.bg[k] == null) d.bg[k] = base.bg[k];
@@ -202,7 +203,7 @@
           <label><span class="label">${t('cc.lineH')}</span>${range('lineH', 1, 2.6, 0.05, d.lineH)}</label>
         </div>`)}
       ${group(t('cc.ink'), colorRow('ink', d.ink, INKS))}
-      ${group(t('cc.align'), chips('align', d.align, [['left', t('cc.alignL')], ['center', t('cc.alignC')], ['justify', t('cc.alignJ')]]))}`;
+      ${group(t('cc.align'), chips('align', d.align, [['left', t('cc.alignL')], ['center', t('cc.alignC')]]))}`;
     if (ui.ccPane === 'chat') return `
       ${group(t('cc.theme'), `<div class="clip-themes">${THEMES.map((x) => `<button type="button" data-act="cc-set" data-k="theme" data-v="${x}" aria-pressed="${d.theme === x}"><span class="th-mini th-mini-${x}"><i></i><i></i></span>${t('cc.th.' + x)}</button>`).join('')}</div>`)}
       ${group(t('cc.people'), `<div class="p-tabs">${d.profiles.map((x, i) => `<button data-act="cc-tab" data-i="${i}" aria-pressed="${ui.ccTab === i}"><span class="p-dot" style="background:${esc(x.bubble)}"></span>${esc(x.name || 'P' + (i + 1))}</button>`).join('')}</div>
