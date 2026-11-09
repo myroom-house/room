@@ -1171,3 +1171,17 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
 .tpl-mini svg { max-width: 100%; max-height: 64px; width: auto; height: 100%; }
 .tpl-pick small { font-size: 12px; }
 .dk-item.t-tpl.locked { pointer-events: none !important; }
+
+/* 접은 글 */
+.fold { position: relative; }
+.fold-body { padding-top: 6px; margin-top: -6px; max-height: 236px; overflow: hidden; transition: max-height .25s ease; }
+.fold:not(.open):not(.short) .fold-body { -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent); mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+.fold.open .fold-body { max-height: none; overflow: visible; }
+.fold.short .fold-body { max-height: none; overflow: visible; }
+.fold.short .fold-btn { display: none; }
+.fold-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; margin-top: 6px; padding: 7px; border: 1px dashed var(--line-strong); border-radius: 10px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 13px; cursor: pointer; }
+.fold-btn:hover { color: var(--ink); border-color: var(--accent); }
+.fold-btn .ico { width: 15px; height: 15px; transition: transform .2s; }
+.fold.open .fold-btn .ico { transform: rotate(180deg); }
+.fold .fb-less, .fold.open .fb-more { display: none; }
+.fold.open .fb-less { display: inline; }

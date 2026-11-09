@@ -143,7 +143,7 @@
         </div></div>
       <p class="hint" style="margin:0 0 10px">${t('hs.cardHint', { n: list().length })}</p>
       ${App.stickerFolderBar('manage')}
-      ${App.stickersInView().length ? `<div class="hs-lib">${App.stickersInView().map((s) => `<div class="hs-lib-item ${App.ui.stkSel.has(s.id) ? 'sel' : ''}" data-stk-drag="${s.id}"><button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" title="${t('hs.putHome')}"><img data-asset="${esc(s.assetId)}" alt=""></button>${App.ui.stkSelect ? `<span class="hs-check">${App.ui.stkSel.has(s.id) ? '✓' : ''}</span>` : `<button type="button" class="hs-lib-x" data-act="hs-lib-del" data-asset="${esc(s.assetId)}" aria-label="${t('c.delete')}">×</button>`}</div>`).join('')}</div>` : `<p class="muted small" style="margin:0">${lib().length ? t('stk.emptyFolder') : t('hs.libEmpty')}</p>`}
+      ${App.stickersInView().length ? App.fold('stickers', `<div class="hs-lib">${App.stickersInView().map((s) => `<div class="hs-lib-item ${App.ui.stkSel.has(s.id) ? 'sel' : ''}" data-stk-drag="${s.id}"><button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" title="${t('hs.putHome')}"><img data-asset="${esc(s.assetId)}" alt=""></button>${App.ui.stkSelect ? `<span class="hs-check">${App.ui.stkSel.has(s.id) ? '✓' : ''}</span>` : `<button type="button" class="hs-lib-x" data-act="hs-lib-del" data-asset="${esc(s.assetId)}" aria-label="${t('c.delete')}">×</button>`}</div>`).join('')}</div>`) : `<p class="muted small" style="margin:0">${lib().length ? t('stk.emptyFolder') : t('hs.libEmpty')}</p>`}
       ${list().length ? `<button class="link-btn" style="margin-top:8px" data-act="hs-clear">${t('hs.clear')}</button>` : ''}
     </div>`;
   };

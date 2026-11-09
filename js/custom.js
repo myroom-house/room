@@ -36,12 +36,12 @@
           <div class="form-grid">
             <label class="field grow"><span class="label">${t('cu.appFont')}</span><select class="input select" data-change="set-font" data-k="appFont">${App.fontOptions(s.appFont)}</select></label>
           </div>
-          <ul class="font-list">${App.allFonts().filter((f) => f.id).map((f) => `
+          ${App.fold('fonts', `<ul class="font-list">${App.allFonts().filter((f) => f.id).map((f) => `
             <li><span class="font-name">${esc(f.name)}${f.user ? '' : ` <span class="muted small">${t('cu.builtin')}</span>`}</span>
               <span class="font-sample" style="font-family:${f.family}, var(--font)">${t('cu.fontSample')}</span>
               <button class="btn small ${s.appFont === f.id ? 'primary' : ''}" data-act="font-use" data-id="${f.id}">${s.appFont === f.id ? t('cu.fontUsing') : t('cu.fontUse')}</button>
               ${f.user ? `<button class="icon-btn" data-act="font-del" data-id="${f.id}" title="${t('c.delete')}">${svg('trash')}</button>` : '<span class="icon-btn" aria-hidden="true"></span>'}</li>`).join('')}
-          </ul>
+          </ul>`)}
           ${userFonts.length ? '' : `<p class="hint">${t('cu.fontEmpty')}</p>`}
         </div>
 
@@ -74,7 +74,25 @@
       </div>
     </section>`;
   };
-  App.after.custom = () => { App.hydrateAssets(App.$('#main')); };
+  App.after.custom = () => { App.hydrateAssets(App.$('#main')); App.checkFolds(); };
+
+  /* ---------- 접은 글: 길면 일부만 보이고 눌러야 전체 ---------- */
+  const folds = new Set();
+  App.fold = (key, html) => `<div class="fold ${folds.has(key) ? 'open' : ''}" data-fold="${key}"><div class="fold-body">${html}</div><button type="button" class="fold-btn" data-act="fold-toggle" data-k="${key}"><span class="fb-more">${t('cu.foldMore')}</span><span class="fb-less">${t('cu.foldLess')}</span>${svg('down')}</button></div>`;
+  App.checkFolds = () => {
+    App.$$('.fold').forEach((f) => {
+      const b = f.querySelector('.fold-body');
+      f.classList.toggle('short', !f.classList.contains('open') && b.scrollHeight <= b.clientHeight + 4);
+    });
+    // 스티커 그림이 늦게 뜨면 높이가 바뀌니 한 번 더
+    clearTimeout(App._foldT); App._foldT = setTimeout(() => App.$$('.fold:not(.open)').forEach((f) => { const b = f.querySelector('.fold-body'); f.classList.toggle('short', b.scrollHeight <= b.clientHeight + 4); }), 400);
+  };
+  App.A['fold-toggle'] = (el) => {
+    const k = el.dataset.k, box = el.closest('.fold');
+    if (folds.has(k)) folds.delete(k); else folds.add(k);
+    box.classList.toggle('open', folds.has(k));
+    if (!folds.has(k)) box.scrollIntoView({ block: 'nearest' });
+  };
 
   function parseFamily(css) {
     let m = css.match(/font-family\s*:\s*['"]?([^;'"}]+)/i);

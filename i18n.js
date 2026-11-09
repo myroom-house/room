@@ -838,5 +838,7 @@ window.I18N = {
   'dk.type.tpl': '속지',
   'dk.edit': '편집',
   'dk.done': '완료',
-  'diary.dayUnit': '일'
+  'diary.dayUnit': '일',
+  'cu.foldMore': '전체 보기',
+  'cu.foldLess': '접기'
 };
