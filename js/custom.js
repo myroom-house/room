@@ -59,11 +59,6 @@
           <p class="hint" style="margin:-4px 0 0">${t('cu.profileSync')}</p>
         </div>
 
-        <div class="card">
-          <h3>${t('cu.htmlMoved')}</h3>
-          <p class="hint" style="margin:0">${t('cu.htmlMovedHint')}</p>
-          ${App.on('social') ? `<button class="btn small" data-act="so-go-edit">${t('cu.htmlGo')}</button>` : ''}
-        </div>
       </div>
     </section>`;
   };
