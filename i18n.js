@@ -840,5 +840,6 @@ window.I18N = {
   'dk.done': '완료',
   'diary.dayUnit': '일',
   'cu.foldMore': '전체 보기',
-  'cu.foldLess': '접기'
+  'cu.foldLess': '접기',
+  'cu.profileSync': '이름·상태 메시지·사진은 이웃 프로필과 같이 바뀌어요'
 };

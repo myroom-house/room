@@ -244,6 +244,7 @@
       const prof = await A.myProfile();
       if (!prof || prof.missing) { st.status = 'handle'; st.meta = prof ? prof.meta : {}; return render(); }
       st.profile = prof;
+      if (!ui.so.demo) pullProfile(prof);
       const fs = await A.friendships();
       const others = [...new Set(fs.map((f) => (f.requester === me.id ? f.addressee : f.requester)))];
       const profs = await A.profiles(others);
@@ -691,7 +692,7 @@
     },
     'so-pick-cancel': () => { ui.so.place = null; App.renderMain(); },
     // 내 페이지 편집
-    'so-avatar': busy(async () => { const url = await uploadImage(400, true); if (url) { await api().saveProfile({ avatar_url: url }); refresh(); } }),
+    'so-avatar': busy(async () => { const url = await uploadImage(400, true); if (url) { await api().saveProfile({ avatar_url: url }); if (!ui.so.demo) pullProfile({ ...st.profile, avatar_url: url }); refresh(); } }),
     'so-banner-upload': busy(async () => {
       const [f] = await App.pickFiles('image/png,image/jpeg,image/gif,image/webp');
       if (!f) return;
@@ -730,6 +731,50 @@
       refresh();
     })
   });
+  /* ---------- 프로필 연동 (꾸미기 프로필 ↔ 이웃 프로필) ---------- */
+  // 이웃 프로필(이름·상태 메시지·사진)이 기준이고, 꾸미기에서 고쳐도 이웃 프로필로 바로 올라가요
+  function pullProfile(prof) {
+    if (!prof || prof.missing) return;
+    const p = App.D.profile || {};
+    const next = { name: prof.name || '', status: prof.bio || '', avatar: prof.avatar_url || '' };
+    if (p.name === next.name && p.status === next.status && p.avatar === next.avatar) return;
+    App.silent((d) => { Object.assign(d.profile, next); });
+    if (App.renderProfile) App.renderProfile();
+    if (App.renderTitle) App.renderTitle();
+    if (App.ui.view === 'custom' && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('.cu-grid'))) App.renderMain();
+  }
+  let myProfOk = null;
+  async function canPush() {
+    if (!Sb.configured() || !navigator.onLine) return false;
+    const u = await Sb.me();
+    if (!u) return false;
+    if (myProfOk !== u.id) { const pr = await Sb.myProfile(); if (!pr || pr.missing) return false; myProfOk = u.id; }
+    return true;
+  }
+  App.soProfile = {
+    async push(patch) {
+      try {
+        if (!(await canPush())) return false;
+        await Sb.saveProfile(patch);
+        if (st.profile) Object.assign(st.profile, patch);
+        return true;
+      } catch (e) { console.error(e); return false; }
+    },
+    async uploadAvatar() {
+      if (!(await canPush())) return null;
+      const url = await uploadImage(400, true);
+      if (!url) return '';
+      await Sb.saveProfile({ avatar_url: url });
+      if (st.profile) st.profile.avatar_url = url;
+      return url;
+    },
+    async pull() {
+      try { if (!(await canPush())) return; pullProfile(await Sb.myProfile()); } catch (e) { /* 무시 */ }
+    }
+  };
+  // 앱을 켜면 이웃 프로필을 한 번 받아와요
+  setTimeout(() => App.soProfile.pull(), 1500);
+
   /* ---------- 할 일 바로 연동 ---------- */
   // '할 일에서 자동으로' 가 켜져 있으면, 할 일을 고칠 때마다 게시된 페이지의 투두만 바로 바꿔요
   let todoSig = null, todoBusy = false;
@@ -778,7 +823,7 @@
       d.bgm = { url, yt: '', title: tr.title, artist: tr.artist || '', trackId: tr.id };
       dirty(); App.renderMain();
     }),
-    'so-profile': busy(async (el) => { await api().saveProfile({ [el.dataset.k]: el.value.trim() }); st.profile[el.dataset.k] = el.value.trim(); App.toast(t('c.saved')); }),
+    'so-profile': busy(async (el) => { await api().saveProfile({ [el.dataset.k]: el.value.trim() }); st.profile[el.dataset.k] = el.value.trim(); if (!ui.so.demo) pullProfile(st.profile); App.toast(t('c.saved')); }),
     'so-todo-auto': (el) => { S().draft.todos.auto = el.checked; dirty(); App.renderMain(); },
     'so-todo-toggle': (el) => { S().draft.todos.items[Number(el.dataset.i)].done = el.checked; dirty(); App.renderMain(); },
     'so-set': (el) => { setPath(S().draft, el.dataset.k, el.value); dirty(); App.renderMain(); },

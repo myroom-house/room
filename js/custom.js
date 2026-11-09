@@ -54,11 +54,9 @@
               <div class="row gap-xs"><button class="btn small" data-act="avatar-upload">${t('cu.upload')}</button>${img ? `<button class="btn small ghost" data-act="avatar-remove">${t('cu.removeAvatar')}</button>` : ''}</div>
             </div>
           </div>
-          <div class="form-grid">
-            <label class="field"><span class="label">${t('cu.emoji')}</span><input class="input" style="width:80px" maxlength="8" data-input="profile-emoji" value="${esc(p.emoji)}"></label>
-            <label class="field grow"><span class="label">${t('cu.name')}</span><input class="input" data-input="profile-name" value="${esc(p.name)}"></label>
-          </div>
-          <label class="field"><span class="label">${t('cu.status')}</span><input class="input" data-input="profile-status" value="${esc(p.status)}"></label>
+          <label class="field"><span class="label">${t('cu.name')}</span><input class="input" maxlength="30" data-input="profile-name" value="${esc(p.name)}"></label>
+          <label class="field"><span class="label">${t('cu.status')}</span><input class="input" maxlength="80" data-input="profile-status" value="${esc(p.status)}"></label>
+          <p class="hint" style="margin:-4px 0 0">${t('cu.profileSync')}</p>
           <span class="label">${t('cu.links')}</span>
           <div class="stack-s">${(p.links || []).map((l, i) => `
             <div class="row gap-xs"><input class="input" style="flex:0 0 110px" data-input="link-label" data-i="${i}" value="${esc(l.label)}" placeholder="${esc(t('cu.linkLabel'))}"><input class="input grow" data-input="link-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://"><button class="icon-btn" data-act="link-del" data-i="${i}" aria-label="${t('c.delete')}">${svg('x')}</button></div>`).join('')}
@@ -109,6 +107,13 @@
     return code.replace(/<\/?style[^>]*>/gi, '');
   }
 
+  // 이웃 프로필로 올리기 (타자 칠 때마다 말고 잠깐 멈추면)
+  let pend = {}, pendT = null;
+  function pushLater(patch) {
+    Object.assign(pend, patch);
+    clearTimeout(pendT);
+    pendT = setTimeout(() => { const p = pend; pend = {}; if (App.soProfile) App.soProfile.push(p); }, 900);
+  }
   Object.assign(App.A, {
     'font-use': (el) => App.update((d) => { d.settings.appFont = d.settings.appFont === el.dataset.id ? '' : el.dataset.id; }),
     'theme-set': (el) => App.update((d) => { d.settings.theme = el.dataset.v; }),
@@ -165,6 +170,13 @@
       const st = document.querySelector(`style[data-font="${f.id}"]`); if (st) st.remove();
     },
     'avatar-upload': async () => {
+      if (App.soProfile) {
+        try {
+          const url = await App.soProfile.uploadAvatar();
+          if (url === '') return;
+          if (url) { App.update((d) => { d.profile.avatar = url; }); App.toast(t('c.saved')); return; }
+        } catch (e) { console.error(e); }
+      }
       const [f] = await App.pickFiles('image/*');
       if (!f) return;
       const blob = await Assets.shrinkImage(f, 360, f.type === 'image/png');
@@ -172,7 +184,7 @@
       r.onload = () => App.update((d) => { d.profile.avatar = r.result; });
       r.readAsDataURL(blob);
     },
-    'avatar-remove': () => App.update((d) => { d.profile.avatar = ''; }),
+    'avatar-remove': () => { App.update((d) => { d.profile.avatar = ''; }); if (App.soProfile) App.soProfile.push({ avatar_url: '' }); },
     'link-add': () => App.update((d) => { d.profile.links = d.profile.links || []; d.profile.links.push({ label: '', url: '' }); }),
     'link-del': (el) => App.update((d) => { d.profile.links.splice(Number(el.dataset.i), 1); }),
     'css-clear': () => App.update((d) => { d.settings.customCSS = ''; })
@@ -180,8 +192,8 @@
   App.K['font-save-local'] = () => App.A['font-save-local']();
 
   Object.assign(App.I, {
-    'profile-name': (el) => { App.silent((d) => { d.profile.name = el.value; }); App.renderTitle(); App.renderProfile(); },
-    'profile-status': (el) => { App.silent((d) => { d.profile.status = el.value; }); App.renderProfile(); },
+    'profile-name': (el) => { App.silent((d) => { d.profile.name = el.value; }); App.renderTitle(); App.renderProfile(); pushLater({ name: el.value.trim() }); },
+    'profile-status': (el) => { App.silent((d) => { d.profile.status = el.value; }); App.renderProfile(); pushLater({ bio: el.value.trim() }); },
     'profile-emoji': (el) => { App.silent((d) => { d.profile.emoji = el.value; }); App.renderProfile(); },
     'link-label': (el) => { App.silent((d) => { d.profile.links[Number(el.dataset.i)].label = el.value; }); App.renderProfile(); },
     'link-url': (el) => { App.silent((d) => { d.profile.links[Number(el.dataset.i)].url = el.value.trim(); }); App.renderProfile(); },
@@ -190,7 +202,7 @@
   });
   Object.assign(App.C, {
     'set-font': (el) => App.update((d) => { d.settings[el.dataset.k] = el.value; }),
-    'avatar-url': (el) => { const v = el.value.trim(); if (v && !App.safeImg(v)) return; App.update((d) => { d.profile.avatar = v; }); },
+    'avatar-url': (el) => { const v = el.value.trim(); if (v && !App.safeImg(v)) return; App.update((d) => { d.profile.avatar = v; }); if (App.soProfile && !v.startsWith('data:')) App.soProfile.push({ avatar_url: v }); },
     'widget-toggle': (el) => App.silent((d) => { d.settings.useCustomHTML = el.checked; })
   });
 })(window.App);
