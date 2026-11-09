@@ -194,7 +194,7 @@
     const title = t('home.room', { name: D.profile.name || t('home.defaultName') });
     $('#roomTitle').textContent = title;
     document.title = title + ' · MyRoom';
-    $('#counter').innerHTML = `<span>${t('visit.today')} <b>${D.visits.today}</b></span><span>${t('visit.total')} <b>${D.visits.total}</b></span>`;
+    $('#counter').innerHTML = '';
     $('#quickMemoBtn').innerHTML = `${App.svg('plus')}<span>${t('memo.quick')}</span>`;
   }
   App.renderTitle = renderTitle;
