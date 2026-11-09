@@ -103,24 +103,7 @@
 
   /* ---------- 글꼴 ---------- */
   const BUILTIN_FONTS = [
-    ['b:pretendard', 'Pretendard', "'Pretendard'"],
-    ['b:gaegu', '개구 · Gaegu', "'Gaegu'"],
-    ['b:pen', '나눔손글씨 펜', "'Nanum Pen Script'"],
-    ['b:gowun', '고운돋움', "'Gowun Dodum'"],
-    ['b:gamja', '감자꽃', "'Gamja Flower'"],
-    ['b:myeongjo', '나눔명조', "'Nanum Myeongjo'"],
-    ['b:yomogi', 'よもぎ · Yomogi', "'Yomogi'"],
-    ['b:zenmaru', 'Zen Maru Gothic', "'Zen Maru Gothic'"],
-    ['b:himelody', '하이멜로디', "'Hi Melody'"],
-    ['b:poorstory', '푸어스토리', "'Poor Story'"],
-    ['b:jua', '주아', "'Jua'"],
-    ['b:cute', '귀여운 글꼴', "'Cute Font'"],
-    ['b:singleday', '싱글데이', "'Single Day'"],
-    ['b:yeonsung', '연성', "'Yeon Sung'"],
-    ['b:dongle', '동글', "'Dongle'"],
-    ['b:batang', '고운바탕', "'Gowun Batang'"],
-    ['b:dokdo', '동해독도', "'East Sea Dokdo'"],
-    ['b:dohyeon', '도현', "'Do Hyeon'"]
+    ['b:pretendard', 'Pretendard', "'Pretendard'"]
   ];
   App.allFonts = function () {
     const list = [{ id: '', name: t('font.default'), family: 'var(--font)' }];

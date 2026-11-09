@@ -594,7 +594,7 @@
     'dk-add-tape': (el) => addItem({ type: 'tape', pattern: el.dataset.p, color: el.dataset.c, w: 220, r: rand(-10, 10) }),
     'dk-add-text': (el) => {
       const e = cur();
-      addItem({ type: 'text', text: t('dk.sampleText'), style: el.dataset.v, font: e.font || 'b:gaegu', size: 26, color: '', w: 240, r: 0 });
+      addItem({ type: 'text', text: t('dk.sampleText'), style: el.dataset.v, font: e.font || '', size: 26, color: '', w: 240, r: 0 });
     },
     'dk-upload-photo': async () => {
       const files = await App.pickFiles('image/*', true);
