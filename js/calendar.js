@@ -26,11 +26,18 @@
     return App.D.ddays.filter((x) => x.cal !== false).filter((x) => (x.yearly ? x.date.slice(5) === s.slice(5) && s >= x.date : x.date === s));
   };
   const memosDue = (s) => (App.on('memo') ? App.D.memos.filter((m) => m.due === s) : []);
-  const visibleEvents = (s) => App.D.events.filter((e) => e.date === s);
+  // 기간 일정: date(시작) ~ end(끝, 없으면 하루)
+  const endOf = (e) => (e.end && e.end > e.date ? e.end : e.date);
+  App.evOn = (e, s) => e.date <= s && s <= endOf(e);
+  App.evRange = (e) => (endOf(e) === e.date ? '' : `${fmt(e.date, { month: 'numeric', day: 'numeric' })} ~ ${fmt(endOf(e), { month: 'numeric', day: 'numeric' })}`);
+  const evSort = (a, b) => ((endOf(b) > b.date) - (endOf(a) > a.date)) || a.date.localeCompare(b.date) || (endOf(b)).localeCompare(endOf(a)) || String(a.id).localeCompare(String(b.id));
+  const visibleEvents = (s) => App.D.events.filter((e) => App.evOn(e, s)).sort(evSort);
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const dayDiff = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
 
   App.miniCal = function (y, m) {
     const td = todayStr();
-    const has = new Set([...App.D.events.map((e) => e.date), ...App.D.ddays.filter((x) => !x.yearly && x.cal !== false).map((x) => x.date)]);
+    const has = new Set([...App.D.events.flatMap((e) => { const out = []; for (let d = e.date, i = 0; d <= endOf(e) && i < 400; d = addDays(d, 1), i++) out.push(d); return out; }), ...App.D.ddays.filter((x) => !x.yearly && x.cal !== false).map((x) => x.date)]);
     let html = App.dayOrder().map((i) => `<span class="wd">${esc(App.wdName(i, 'narrow'))}</span>`).join('');
     for (const d of monthCells(y, m)) {
       const s = ymd(d);
@@ -46,11 +53,40 @@
     const td = todayStr();
     if (!ui.calCat || !cats().some((c) => c.id === ui.calCat)) ui.calCat = cats()[0] ? cats()[0].id : '';
     let cells = App.dayOrder().map((i) => `<div class="wd ${i === 0 ? 'sun' : ''}">${esc(App.wdName(i))}</div>`).join('');
-    for (const d of monthCells(y, m)) {
+    const allCells = monthCells(y, m);
+    // 기간 일정은 주마다 같은 줄(lane)에 오도록 자리 잡기
+    const lanes = {};
+    for (let w = 0; w < allCells.length / 7; w++) {
+      const ws = ymd(allCells[w * 7]), we = ymd(allCells[w * 7 + 6]);
+      const used = [];
+      D.events.filter((e) => endOf(e) > e.date && e.date <= we && endOf(e) >= ws).sort(evSort).forEach((e) => {
+        const a = Math.max(0, dayDiff(ws, e.date)), b = Math.min(6, dayDiff(ws, endOf(e)));
+        let L = 0;
+        while ((used[L] || []).some(([x, y2]) => !(b < x || a > y2))) L++;
+        (used[L] = used[L] || []).push([a, b]);
+        lanes[w + ':' + e.id] = L;
+      });
+    }
+    allCells.forEach((d, idx) => {
       const s = ymd(d);
+      const weekStart = idx % 7 === 0, weekEnd = idx % 7 === 6;
+      const wk = Math.floor(idx / 7);
+      const evs = visibleEvents(s);
+      const multis = evs.filter((e) => endOf(e) > e.date), singles = evs.filter((e) => endOf(e) === e.date);
+      const slot = [];
+      multis.forEach((e) => { slot[lanes[wk + ':' + e.id] || 0] = e; });
+      const laneChips = [];
+      for (let i = 0; i < slot.length; i++) laneChips.push(slot[i] || null);
       const chips = [
+        ...[...laneChips, ...singles].map((e) => {
+          if (!e) return '<span class="chip gap">&nbsp;</span>';
+          const multi = endOf(e) > e.date;
+          const st = s === e.date, en = s === endOf(e);
+          const span = multi ? ` span ${st ? 'span-s' : ''} ${en ? 'span-e' : ''} ${!st && weekStart ? 'span-w' : ''} ${!en && weekEnd ? 'span-we' : ''}` : '';
+          const label = !multi || st || weekStart ? esc(e.title) : '&nbsp;';
+          return `<span class="chip ev-drag${span}" data-eid="${e.id}" style="--c:${App.eventColor(e)}" title="${esc(e.title + (multi ? ' · ' + App.evRange(e) : '') + ' — ' + t('cal.dragHint'))}">${label}</span>`;
+        }),
         ...App.ddaysOn(s).map((x) => `<span class="chip dd" style="--c:${App.safeColor(x.color)}">${esc(x.title)}</span>`),
-        ...visibleEvents(s).map((e) => `<span class="chip ev-drag" data-eid="${e.id}" style="--c:${App.eventColor(e)}" title="${esc(t('cal.dragHint'))}">${esc(e.title)}</span>`),
         ...(App.on('tasks') ? D.todos.filter((x) => x.date === s).map((x) => `<span class="chip todo ${x.done ? 'done' : ''}">${esc(x.text)}</span>`) : []),
         ...memosDue(s).map((x) => `<span class="chip todo memo-due">📝 ${esc(memoTitle(x))}</span>`)
       ];
@@ -59,10 +95,10 @@
       const cls = ['cal-cell', d.getMonth() !== m ? 'out' : '', s === td ? 'today' : '', s === ui.calSel ? 'sel' : ''].join(' ');
       cells += `<button type="button" class="${cls}" data-act="cal-pick" data-date="${s}">
         <span class="num"><span class="n ${d.getDay() === 0 ? 'sun' : ''}">${d.getDate()}</span><span>${di ? esc(di.mood || '✎') : ''}</span></span>${shown}</button>`;
-    }
+    });
 
     const sel = ui.calSel;
-    const selEvents = D.events.filter((e) => e.date === sel);
+    const selEvents = visibleEvents(sel);
     const selTodos = D.todos.filter((x) => x.date === sel);
     const selDiary = D.diary.find((x) => x.date === sel);
     const selDd = App.ddaysOn(sel);
@@ -89,8 +125,9 @@
           ${selDd.length ? `<div class="day-sec">${selDd.map((x) => `<span class="pill" style="--c:${App.safeColor(x.color)}">${esc(x.title)} · ${esc(App.ddayInfo(x).label)}</span>`).join(' ')}</div>` : ''}
           <div class="day-sec">
             <span class="label">${t('cal.events')}</span>
-            ${selEvents.length ? `<ul class="item-list">${selEvents.map((e) => `<li class="item ev-drag" data-eid="${e.id}" title="${esc(t('cal.dragHint'))}"><span class="dot" style="background:${App.eventColor(e)}"></span><span class="txt">${esc(e.title)}${catOf(e) ? ` <span class="muted small">${esc(catOf(e).name)}</span>` : ''}</span><button class="icon-btn hover-only" data-act="event-del" data-id="${e.id}" aria-label="${t('c.delete')}">${svg('x')}</button></li>`).join('')}</ul>` : ''}
+            ${selEvents.length ? `<ul class="item-list">${selEvents.map((e) => `<li class="item ev-drag" data-eid="${e.id}" title="${esc(t('cal.dragHint'))}"><span class="dot" style="background:${App.eventColor(e)}"></span><span class="txt">${esc(e.title)}${catOf(e) ? ` <span class="muted small">${esc(catOf(e).name)}</span>` : ''}${App.evRange(e) ? `<span class="ev-range">${App.evRange(e)}</span>` : ''}</span><button class="icon-btn hover-only" data-act="event-edit" data-id="${e.id}" aria-label="${t('c.edit')}" title="${t('cal.editEvent')}">${svg('edit')}</button><button class="icon-btn hover-only" data-act="event-del" data-id="${e.id}" aria-label="${t('c.delete')}">${svg('x')}</button></li>`).join('')}</ul>` : ''}
             <div class="add-row"><input class="input" data-enter="event-add" data-keep="event-add" id="eventTitle" placeholder="${esc(t('cal.eventPh'))}"><button class="btn primary" data-act="event-add">${t('c.add')}</button></div>
+            <label class="ev-end-row"><span class="muted small">${t('cal.until')}</span><input type="date" class="input small" id="eventEnd" data-keep="event-end" min="${sel}" value="${ui.calEnd && ui.calEnd > sel ? ui.calEnd : ''}"></label>
             <div class="cat-pick">${cats().map((c) => `<button type="button" class="cat-chip" style="--c:${App.safeColor(c.color)}" data-act="event-cat" data-id="${c.id}" aria-pressed="${ui.calCat === c.id}"><i></i>${esc(c.name)}</button>`).join('')}</div>
           </div>
           ${App.on('tasks') ? `<div class="day-sec">
@@ -118,7 +155,11 @@
     const title = (input && input.value || '').trim();
     if (!title) return;
     const c = cats().find((x) => x.id === ui.calCat);
+    const endEl = App.$('#eventEnd');
+    const end = endEl && endEl.value && endEl.value > ui.calSel ? endEl.value : '';
     const ev = { id: uid(), date: ui.calSel, title, cat: c ? c.id : '', color: c ? c.color : App.EVENT_COLORS[0] };
+    if (end) ev.end = end;
+    ui.calEnd = '';
     App.update((d) => { d.events.push(ev); });
   }
 
@@ -155,7 +196,8 @@
     if (App.ui.view !== 'calendar' || ev.button > 0) return;
     const el = ev.target.closest && ev.target.closest('.ev-drag');
     if (!el || ev.target.closest('button.icon-btn, .btn')) return;
-    evDrag = { id: el.dataset.eid, el, sx: ev.clientX, sy: ev.clientY, ghost: null, over: null, pid: ev.pointerId };
+    const cell0 = el.closest('.cal-cell');
+    evDrag = { id: el.dataset.eid, el, sx: ev.clientX, sy: ev.clientY, ghost: null, over: null, pid: ev.pointerId, grabDate: cell0 ? cell0.dataset.date : ui.calSel };
   });
   document.addEventListener('pointermove', (ev) => {
     if (!evDrag) return;
@@ -193,9 +235,13 @@
     if (ev.type === 'pointercancel' || !d.over) return;
     const date = d.over.dataset.date;
     const e = App.D.events.find((x) => x.id === d.id);
-    if (!e || !date || e.date === date) return;
+    if (!e || !date) return;
     ui.calSel = date;
-    App.update((data) => { const x = data.events.find((y) => y.id === d.id); if (x) x.date = date; });
+    // 기간 일정은 잡은 칸 기준으로 통째로 옮기기
+    const grab = d.grabDate && App.evOn(e, d.grabDate) ? d.grabDate : e.date;
+    const delta = dayDiff(grab, date);
+    if (!delta) return;
+    App.update((data) => { const x = data.events.find((y) => y.id === d.id); if (x) { if (x.end && x.end > x.date) x.end = addDays(x.end, delta); x.date = addDays(x.date, delta); } });
     App.toast(t('cal.moved', { d: fmt(date, { month: 'long', day: 'numeric' }) }));
   };
   document.addEventListener('pointerup', endDrag);
@@ -218,6 +264,39 @@
     },
     'cal-jump': (el) => { ui.calSel = el.dataset.date; const d = parse(ui.calSel); ui.calY = d.getFullYear(); ui.calM = d.getMonth(); App.go('calendar'); },
     'event-add': addEvent,
+    'event-edit': (el) => {
+      const e = App.D.events.find((x) => x.id === el.dataset.id);
+      if (!e) return;
+      App.openModal(`<h3 class="modal-title">${t('cal.editEvent')}</h3>
+        <div class="stack-s">
+          <label class="field"><span class="label">${t('cal.eventPh')}</span><input class="input" id="evTitle" value="${esc(e.title)}" data-enter="event-save"></label>
+          <div class="grid-2">
+            <label class="field"><span class="label">${t('cal.start')}</span><input type="date" class="input" id="evStart" value="${e.date}"></label>
+            <label class="field"><span class="label">${t('cal.end')}</span><input type="date" class="input" id="evEnd" value="${endOf(e)}"></label>
+          </div>
+          <div class="cat-pick">${cats().map((c) => `<button type="button" class="cat-chip" style="--c:${App.safeColor(c.color)}" data-act="event-edit-cat" data-id="${c.id}" aria-pressed="${e.cat === c.id}"><i></i>${esc(c.name)}</button>`).join('')}</div>
+        </div>
+        <div class="modal-actions"><span></span><div class="row"><button class="btn" data-act="modal-close">${t('c.cancel')}</button><button class="btn primary" data-act="event-save" data-id="${e.id}">${t('c.save')}</button></div></div>`, null, 'small');
+      ui.evEditId = e.id; ui.evEditCat = e.cat || '';
+    },
+    'event-edit-cat': (el) => { ui.evEditCat = el.dataset.id; App.$$('[data-act="event-edit-cat"]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.id === ui.evEditCat)); },
+    'event-save': () => {
+      const id = ui.evEditId;
+      const title = (App.$('#evTitle').value || '').trim();
+      const start = App.$('#evStart').value;
+      let end = App.$('#evEnd').value;
+      if (!title || !start) return;
+      if (!end || end < start) end = start;
+      App.closeModal({ noRender: true });
+      App.update((d) => {
+        const x = d.events.find((y) => y.id === id); if (!x) return;
+        x.title = title; x.date = start;
+        if (end > start) x.end = end; else delete x.end;
+        const c = (d.eventCats || []).find((k) => k.id === ui.evEditCat);
+        if (c) { x.cat = c.id; x.color = c.color; }
+      });
+      App.toast(t('c.saved'));
+    },
     'event-del': (el) => App.update((d) => { d.events = d.events.filter((x) => x.id !== el.dataset.id); }),
     'event-cat': (el) => {
       ui.calCat = el.dataset.id;

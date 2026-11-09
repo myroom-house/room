@@ -65,11 +65,11 @@
       </div>`);
     }
     if (on('calendar')) {
-      const upcoming = D.events.filter((e) => e.date >= td).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+      const upcoming = D.events.filter((e) => (e.end && e.end > e.date ? e.end : e.date) >= td).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
       right.push(`<div class="card">
         <div class="card-head"><h3>${fmt(td, { year: 'numeric', month: 'long' })}</h3></div>
         ${App.miniCal(now.getFullYear(), now.getMonth())}
-        ${upcoming.length ? `<ul class="up-list">${upcoming.map((e) => `<li><span class="when">${e.date === td ? t('c.today') : fmt(e.date, { month: 'short', day: 'numeric' })}</span><span class="dot" style="background:${App.eventColor(e)}"></span><span>${esc(e.title)}</span></li>`).join('')}</ul>` : ''}
+        ${upcoming.length ? `<ul class="up-list">${upcoming.map((e) => `<li><span class="when">${App.evRange(e) ? App.evRange(e) : e.date === td ? t('c.today') : fmt(e.date, { month: 'short', day: 'numeric' })}</span><span class="dot" style="background:${App.eventColor(e)}"></span><span>${esc(e.title)}</span></li>`).join('')}</ul>` : ''}
       </div>`);
     }
 

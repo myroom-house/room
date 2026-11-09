@@ -841,5 +841,10 @@ window.I18N = {
   'diary.dayUnit': '일',
   'cu.foldMore': '전체 보기',
   'cu.foldLess': '접기',
-  'cu.profileSync': '이름·상태 메시지·사진은 이웃 프로필과 같이 바뀌어요'
+  'cu.profileSync': '이름·상태 메시지·사진은 이웃 프로필과 같이 바뀌어요',
+  'cal.until': '~ 끝나는 날',
+  'cal.untilHint': '(기간 일정일 때만)',
+  'cal.editEvent': '일정 고치기',
+  'cal.start': '시작',
+  'cal.end': '끝'
 };
