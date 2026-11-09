@@ -192,7 +192,7 @@
     if (ui.ccPane === 'text') return `
       ${group('', `<textarea class="input clip-text" id="ccText" rows="10" data-input="cc" data-k="text" spellcheck="false" placeholder="${esc(d.mode === 'chat' ? t('cc.textPhChat') : t('cc.textPh'))}">${esc(d.text)}</textarea>
         <div class="clip-fmt"><button type="button" class="btn small" data-act="cc-nar" title="${t('cc.narHint')}"><i>${t('cc.narMark')}</i></button><button type="button" class="btn small ghost" data-act="cc-nar-off">${t('cc.narOff')}</button><span class="muted small">${t('cc.narHint')}</span></div>
-        <div class="row gap-xs wrap"><button class="btn small" data-act="cc-sample">${t('cc.sample')}</button><button class="btn small ghost" data-act="cc-clear">${t('cc.clearText')}</button></div>`)}
+        <div class="row gap-xs wrap"><button class="btn small ghost" data-act="cc-clear">${t('cc.clearText')}</button></div>`)}
       ${group(t('cc.font'), `<div class="row gap-xs"><select class="input select grow" data-change="cc" data-k="font">${App.fontOptions(d.font)}</select><button class="btn small" data-act="font-add-file" title="${t('cu.fontFile')}">${svg('plus')}${t('cc.myFont')}</button></div>
         <div class="grid-2">
           <label><span class="label">${t('cc.size')}</span>${range('size', 16, 72, 1, d.size, 'px')}</label>
