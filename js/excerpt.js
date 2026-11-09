@@ -50,7 +50,9 @@
   /* ---------- 본문 그리기 (글자는 쓴 그대로) ---------- */
   const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   function inline(s, d) {
-    return escText(s).replace(/\[사진(\d+)\]/g, (_, n) => photoTag(d, Number(n)));
+    return escText(s)
+      .replace(/\*([^*\n]+)\*/g, '<span class="cc-nar">$1</span>') // 지문 (별표는 카드에 안 보여요)
+      .replace(/\[사진(\d+)\]/g, (_, n) => photoTag(d, Number(n)));
   }
   function photoTag(d, n) {
     const id = d.photos[n - 1];
@@ -189,6 +191,7 @@
     const p = d.profiles[ui.ccTab] || d.profiles[0];
     if (ui.ccPane === 'text') return `
       ${group('', `<textarea class="input clip-text" id="ccText" rows="10" data-input="cc" data-k="text" spellcheck="false" placeholder="${esc(d.mode === 'chat' ? t('cc.textPhChat') : t('cc.textPh'))}">${esc(d.text)}</textarea>
+        <div class="clip-fmt"><button type="button" class="btn small" data-act="cc-nar" title="${t('cc.narHint')}"><i>${t('cc.narMark')}</i></button><button type="button" class="btn small ghost" data-act="cc-nar-off">${t('cc.narOff')}</button><span class="muted small">${t('cc.narHint')}</span></div>
         <div class="row gap-xs wrap"><button class="btn small" data-act="cc-sample">${t('cc.sample')}</button><button class="btn small ghost" data-act="cc-clear">${t('cc.clearText')}</button></div>`)}
       ${group(t('cc.font'), `<div class="row gap-xs"><select class="input select grow" data-change="cc" data-k="font">${App.fontOptions(d.font)}</select><button class="btn small" data-act="font-add-file" title="${t('cu.fontFile')}">${svg('plus')}${t('cc.myFont')}</button></div>
         <div class="grid-2">
@@ -305,6 +308,32 @@
     App.hydrateAssets(pnl);
   }
 
+  function narWrap(on) {
+    const ta = App.$('#ccText');
+    if (!ta) return;
+    let a = ta.selectionStart, b = ta.selectionEnd;
+    const v = ta.value;
+    if (on) {
+      if (a === b) { App.toast(t('cc.narSelect')); ta.focus(); return; }
+      // 줄마다 따로 감싸기 (여러 줄을 골라도 줄바꿈이 깨지지 않게), 이미 있는 별표는 정리
+      const sel = v.slice(a, b).replace(/\*/g, '');
+      const wrapped = sel.split('\n').map((l) => { const m = l.match(/^(\s*)(.*?)(\s*)$/); return m[2] ? `${m[1]}*${m[2]}*${m[3]}` : l; }).join('\n');
+      ta.value = v.slice(0, a) + wrapped + v.slice(b);
+      ta.setSelectionRange(a, a + wrapped.length);
+    } else {
+      // 고른 부분(없으면 커서가 있는 줄)의 지문 표시 지우기
+      if (a === b) { a = v.lastIndexOf('\n', a - 1) + 1; b = v.indexOf('\n', b); if (b < 0) b = v.length; }
+      const plain = v.slice(a, b).replace(/\*/g, '');
+      ta.value = v.slice(0, a) + plain + v.slice(b);
+      ta.setSelectionRange(a, a + plain.length);
+    }
+    ta.focus();
+    cc().text = ta.value;
+    save(); renderCard();
+  }
+  // 버튼을 눌러도 본문 칸의 선택이 풀리지 않게
+  document.addEventListener('pointerdown', (ev) => { if (ev.target.closest && ev.target.closest('[data-act="cc-nar"], [data-act="cc-nar-off"]')) ev.preventDefault(); }, true);
+
   /* ---------- 행동 ---------- */
   const STYLE_KEYS = ['theme', 'profiles', 'showName', 'showAvatar', 'font', 'size', 'letter', 'lineH', 'ink', 'align', 'vAlign', 'ratio', 'fit', 'pad', 'bg'];
   const styleOf = (d) => JSON.parse(JSON.stringify(Object.fromEntries(STYLE_KEYS.map((k) => [k, d[k]]))));
@@ -326,6 +355,9 @@
       renderCard();
       rerenderPanel();
     },
+    // 고른 부분을 지문으로 / 지문 풀기
+    'cc-nar': () => narWrap(true),
+    'cc-nar-off': () => narWrap(false),
     'cc-pane': (el) => { ui.ccPane = el.dataset.v; rerenderPanel(); },
     'cc-tab': (el) => { ui.ccTab = Number(el.dataset.i); rerenderPanel(); },
     'cc-zoom': (el) => {
