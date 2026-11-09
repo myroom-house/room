@@ -1199,3 +1199,10 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
 .ev-end-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .ev-end-row .input { width: auto; padding: 4px 8px; font-size: 13px; }
 .chip.gap { background: transparent; visibility: hidden; }
+
+/* 홈 스티커 딸깍 */
+.home-stickers.clicky .hs { pointer-events: auto; cursor: pointer; transform-origin: center; }
+.home-stickers.clicky .hs img { transition: transform .08s; }
+.home-stickers.clicky .hs:active img { transform: scale(.9); }
+.hs.pop img { animation: hs-pop .28s ease-out; }
+@keyframes hs-pop { 0% { transform: scale(.86); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }

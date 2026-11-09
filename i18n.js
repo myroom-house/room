@@ -846,5 +846,6 @@ window.I18N = {
   'cal.untilHint': '(기간 일정일 때만)',
   'cal.editEvent': '일정 고치기',
   'cal.start': '시작',
-  'cal.end': '끝'
+  'cal.end': '끝',
+  'hs.clickSound': '홈 스티커 누르면 딸깍 소리'
 };

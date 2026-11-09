@@ -37,7 +37,8 @@
     const items = list();
     const edit = ui.homeDeco;
     if (!items.length && !edit) return '';
-    return `<div class="home-stickers ${edit ? 'editing' : ''}" id="homeStk">${items.map((s) => `
+    const clicky = App.D.settings.stickerClick !== false;
+    return `<div class="home-stickers ${edit ? 'editing' : ''} ${clicky && !edit ? 'clicky' : ''}" id="homeStk">${items.map((s) => `
         <div class="hs" data-id="${s.id}" style="left:${s.x}%;top:${s.y}px;width:${s.w}px;transform:translate(-50%,-50%) rotate(${s.r || 0}deg)">
           <img data-asset="${esc(s.assetId)}" alt="" draggable="false">
           ${edit ? `<button type="button" class="hs-x" data-act="hs-del" data-id="${s.id}" aria-label="${t('c.delete')}">×</button><span class="hs-rot" title="${t('hs.rotate')}"></span><span class="hs-size" title="${t('hs.resize')}"></span>` : ''}
@@ -50,6 +51,35 @@
         <span class="row gap-xs"><button class="btn small" data-act="hs-pick">${svg('plus')}${t('hs.add')}</button><button class="btn small primary" data-act="hs-done">${t('hs.done')}</button></span>
       </div>`;
   };
+
+  /* ---------- 누르면 딸깍 ---------- */
+  let actx = null;
+  function click() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      const t0 = actx.currentTime;
+      // 짧은 '딸' + 조금 낮은 '깍' 두 번
+      [[0, 2400], [0.045, 1500]].forEach(([dt, f]) => {
+        const len = Math.floor(actx.sampleRate * 0.025);
+        const buf = actx.createBuffer(1, len, actx.sampleRate);
+        const ch = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
+        const src = actx.createBufferSource(); src.buffer = buf;
+        const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f + Math.random() * 300; bp.Q.value = 4;
+        const g = actx.createGain(); g.gain.value = 0.9;
+        src.connect(bp); bp.connect(g); g.connect(actx.destination);
+        src.start(t0 + dt);
+      });
+    } catch (e) { /* 소리 못 내도 괜찮아요 */ }
+  }
+  document.addEventListener('pointerdown', (ev) => {
+    if (ui.homeDeco || App.ui.view !== 'home' || ev.button > 0) return;
+    const el = ev.target.closest && ev.target.closest('.home-stickers.clicky .hs');
+    if (!el) return;
+    click();
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  });
 
   /* ---------- 끌어서 옮기기 · 크기 · 회전 ---------- */
   let drag = null;
@@ -107,6 +137,7 @@
     App.hydrateAssets(App.$('#modalLayer'));
   }
 
+  App.C['hs-click'] = (el) => App.silent((d) => { d.settings.stickerClick = el.checked; });
   Object.assign(App.A, {
     'hs-start': () => { ui.homeDeco = true; App.go('home'); },
     'hs-done': () => { ui.homeDeco = false; App.renderMain(); App.toast(t('c.saved')); },
@@ -142,6 +173,7 @@
           <button class="btn small primary" data-act="hs-start">${t('hs.start')}</button>
         </div></div>
       <p class="hint" style="margin:0 0 10px">${t('hs.cardHint', { n: list().length })}</p>
+      <label class="switch" style="margin:0 0 10px"><input type="checkbox" data-change="hs-click" ${App.D.settings.stickerClick !== false ? 'checked' : ''}><span class="sw-track"></span>${t('hs.clickSound')}</label>
       ${App.stickerFolderBar('manage')}
       ${App.stickersInView().length ? App.fold('stickers', `<div class="hs-lib">${App.stickersInView().map((s) => `<div class="hs-lib-item ${App.ui.stkSel.has(s.id) ? 'sel' : ''}" data-stk-drag="${s.id}"><button type="button" data-act="hs-put" data-asset="${esc(s.assetId)}" title="${t('hs.putHome')}"><img data-asset="${esc(s.assetId)}" alt=""></button>${App.ui.stkSelect ? `<span class="hs-check">${App.ui.stkSel.has(s.id) ? '✓' : ''}</span>` : `<button type="button" class="hs-lib-x" data-act="hs-lib-del" data-asset="${esc(s.assetId)}" aria-label="${t('c.delete')}">×</button>`}</div>`).join('')}</div>`) : `<p class="muted small" style="margin:0">${lib().length ? t('stk.emptyFolder') : t('hs.libEmpty')}</p>`}
       ${list().length ? `<button class="link-btn" style="margin-top:8px" data-act="hs-clear">${t('hs.clear')}</button>` : ''}
