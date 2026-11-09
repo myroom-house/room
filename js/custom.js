@@ -39,6 +39,7 @@
           <ul class="font-list">${App.allFonts().filter((f) => f.id).map((f) => `
             <li><span class="font-name">${esc(f.name)}${f.user ? '' : ` <span class="muted small">${t('cu.builtin')}</span>`}</span>
               <span class="font-sample" style="font-family:${f.family}, var(--font)">${t('cu.fontSample')}</span>
+              <button class="btn small ${s.appFont === f.id ? 'primary' : ''}" data-act="font-use" data-id="${f.id}">${s.appFont === f.id ? t('cu.fontUsing') : t('cu.fontUse')}</button>
               ${f.user ? `<button class="icon-btn" data-act="font-del" data-id="${f.id}" title="${t('c.delete')}">${svg('trash')}</button>` : '<span class="icon-btn" aria-hidden="true"></span>'}</li>`).join('')}
           </ul>
           ${userFonts.length ? '' : `<p class="hint">${t('cu.fontEmpty')}</p>`}
@@ -91,6 +92,7 @@
   }
 
   Object.assign(App.A, {
+    'font-use': (el) => App.update((d) => { d.settings.appFont = d.settings.appFont === el.dataset.id ? '' : el.dataset.id; }),
     'theme-set': (el) => App.update((d) => { d.settings.theme = el.dataset.v; }),
     'font-add-file': async () => {
       const files = await App.pickFiles('.ttf,.otf,.woff,.woff2,font/*', true);

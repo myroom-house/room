@@ -103,7 +103,23 @@
 
   /* ---------- 글꼴 ---------- */
   const BUILTIN_FONTS = [
-    ['b:pretendard', 'Pretendard', "'Pretendard'"]
+    ['b:pretendard', 'Pretendard', "'Pretendard'"],
+    ['b:kyobo2023', '교보손글씨 2023 우선아', "'Kyobo Handwriting 2023'"],
+    ['b:omyu', '오뮤 다예쁨체', "'Omyu Pretty'"],
+    ['b:parkdahyun', '온글잎 박다현체', "'Ownglyph ParkDaHyun'"],
+    ['b:leeseoyun', '이서윤체', "'LeeSeoyun'"],
+    ['b:danjunghae', '카페24 단정해', "'Cafe24 Danjunghae'"],
+    ['b:dovemayo', '둘기마요', "'Dovemayo'"],
+    ['b:dunggeunmiso', '학교안심 둥근미소', "'Hakgyoansim Dunggeunmiso'"],
+    ['b:ssurroundair', '카페24 써라운드 에어', "'Cafe24 Ssurround Air'"],
+    ['b:maruburi', '마루부리', "'MaruBuri'"],
+    ['b:ridibatang', '리디바탕', "'RIDIBatang'"],
+    ['b:chosunmyungjo', '조선일보명조', "'Chosunilbo Myungjo'"],
+    ['b:bookk', '부크크 명조', "'Bookk Myungjo'"],
+    ['b:scoredream', '에스코어드림', "'S-Core Dream'"],
+    ['b:gmarket', '지마켓 산스', "'Gmarket Sans'"],
+    ['b:paperlogy', '페이퍼로지', "'Paperlogy'"],
+    ['b:suit', 'SUIT', "'SUIT'"]
   ];
   App.allFonts = function () {
     const list = [{ id: '', name: t('font.default'), family: 'var(--font)' }];
