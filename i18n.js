@@ -847,5 +847,6 @@ window.I18N = {
   'cal.editEvent': '일정 고치기',
   'cal.start': '시작',
   'cal.end': '끝',
-  'hs.clickSound': '홈 스티커 누르면 딸깍 소리'
+  'hs.clickSound': '홈 스티커 누르면 딸깍 소리',
+  'nav.guide': '사용 가이드'
 };
