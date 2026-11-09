@@ -1109,3 +1109,65 @@ body.ev-dragging, body.ev-dragging * { cursor: grabbing !important; user-select:
 .stk-ghost b { position: absolute; top: -8px; right: -8px; min-width: 22px; height: 22px; border-radius: 11px; background: var(--accent); color: #fff; font-size: 12px; display: grid; place-items: center; padding: 0 5px; }
 body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-select: none; }
 [data-stk-drag] img { -webkit-user-drag: none; user-select: none; }
+
+/* ---------- 다이어리: 목록 · 완성본 보기 ---------- */
+.dk-layer.l-under { z-index: 0; }
+.dk-layer.l-over { z-index: 2; }
+.dk-static, .dk-static * { pointer-events: none !important; }
+.dk-static .dk-title.st { border-bottom-style: dashed; line-height: 50px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-static .dk-body.st { white-space: pre-wrap; word-break: break-word; overflow: hidden; }
+.dk-month { margin: 18px 0 10px; font-size: 15px; font-weight: 700; color: var(--ink-soft); }
+.dk-month:first-of-type { margin-top: 4px; }
+.dk-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+.dk-card { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; text-align: left; color: inherit; cursor: pointer; font: inherit; min-width: 0; }
+.dk-thumb { position: relative; display: block; width: 100%; aspect-ratio: 720 / 1000; overflow: hidden; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 6px 18px rgba(0, 0, 0, .07); transition: transform .15s, box-shadow .15s; background: var(--paper); }
+.dk-thumb .dk-page { box-shadow: none; border-radius: 0; }
+.dk-card:hover .dk-thumb { transform: translateY(-3px); box-shadow: 0 2px 6px rgba(0, 0, 0, .1), 0 12px 26px rgba(0, 0, 0, .1); }
+.dk-card:focus-visible .dk-thumb { outline: 2px solid var(--accent); outline-offset: 3px; }
+.dk-cap { display: flex; align-items: baseline; gap: 6px; padding: 0 2px; }
+.dk-cap b { font-size: 16px; }
+.dk-cap .dk-mw { margin-left: auto; font-size: 15px; }
+.dk-cap-t { font-size: 13px; color: var(--ink-soft); padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-bar { flex-wrap: wrap; gap: 10px; }
+.dk-day { display: inline-flex; align-items: center; gap: 8px; padding: 0 4px; }
+.dk-day .dk-mw { font-size: 18px; }
+.dk-read-stage { display: flex; justify-content: center; width: 100%; max-width: 720px; margin: 0 auto; }
+@media (max-width: 760px) { .dk-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+
+/* ---------- 사진 테두리 · 자르기 ---------- */
+.ph-crop { overflow: hidden; position: relative; }
+.ph-crop img { display: block; width: 100%; }
+.ph-crop.fixed img { height: 100%; object-fit: cover; }
+.frame-round .ph-crop { border-radius: 18px; }
+.frame-round img { border-radius: 0; }
+.frame-circle .ph-crop { border-radius: 50%; }
+.frame-heart .ph-crop {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 92 C22 72 4 56 4 33 C4 17 16 6 30 6 C39 6 46 11 50 18 C54 11 61 6 70 6 C84 6 96 17 96 33 C96 56 78 72 50 92 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 92 C22 72 4 56 4 33 C4 17 16 6 30 6 C39 6 46 11 50 18 C54 11 61 6 70 6 C84 6 96 17 96 33 C96 56 78 72 50 92 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.frame-film { background: #1d1d1f; padding: 22px 8px; position: relative; box-shadow: 0 2px 10px rgba(0, 0, 0, .2); }
+.frame-film::before, .frame-film::after { content: ""; position: absolute; left: 6px; right: 6px; height: 9px; background: repeating-linear-gradient(90deg, #f4efe6 0 8px, transparent 8px 17px); border-radius: 1px; opacity: .92; }
+.frame-film::before { top: 6px; }
+.frame-film::after { bottom: 6px; }
+.frame-picks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.frame-pick { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); cursor: pointer; color: inherit; font: inherit; }
+.frame-pick[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.frame-pick small { font-size: 11px; }
+.fp { width: 34px; height: 30px; display: block; background: linear-gradient(135deg, #b9d3e6, #f2c6d2); }
+.fp-polaroid { width: 28px; height: 32px; border: 3px solid #fff; border-bottom-width: 9px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+.fp-film { border: 4px solid #1d1d1f; border-left-width: 2px; border-right-width: 2px; }
+.fp-round { border-radius: 8px; }
+.fp-circle { width: 30px; height: 30px; border-radius: 50%; }
+.fp-heart { width: 30px; height: 30px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 92 C22 72 4 56 4 33 C4 17 16 6 30 6 C39 6 46 11 50 18 C54 11 61 6 70 6 C84 6 96 17 96 33 C96 56 78 72 50 92 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 92 C22 72 4 56 4 33 C4 17 16 6 30 6 C39 6 46 11 50 18 C54 11 61 6 70 6 C84 6 96 17 96 33 C96 56 78 72 50 92 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.fp-tape { position: relative; }
+.fp-tape::before { content: ""; position: absolute; top: -3px; left: -4px; width: 16px; height: 6px; background: rgba(255, 220, 120, .9); transform: rotate(-30deg); }
+
+/* ---------- 속지 ---------- */
+.dk-tpl { display: block; width: 100%; height: auto; }
+.tpl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tpl-pick { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); cursor: pointer; color: inherit; font: inherit; }
+.tpl-pick:hover { border-color: var(--accent); }
+.tpl-mini { width: 100%; height: 64px; display: flex; align-items: center; justify-content: center; }
+.tpl-mini svg { max-width: 100%; max-height: 64px; width: auto; height: 100%; }
+.tpl-pick small { font-size: 12px; }
+.dk-item.t-tpl.locked { pointer-events: none !important; }
