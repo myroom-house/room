@@ -310,11 +310,9 @@
     const todos = opts.mine ? todayTodosForPage(d) : ((d.todos && d.todos.items) || []);
     const banners = normBanners(d.banners).map((b) => ({ ...b, p: v.names[b.id] })).filter((b) => b.p);
     const bgm = d.bgm && (d.bgm.url || d.bgm.yt) ? d.bgm : null;
-    const custom = d.custom || { html: '', css: '' };
     const bgmKey = bgm ? (bgm.yt || bgm.url) : '';
     return `
     <div class="so-page ${dark ? 'dark' : ''} ${opts.placing ? 'placing' : ''}" id="soPage" style="width:${PAGE_W}px;background-color:${esc(bg.color)};${patternCSS(bg)}">
-      ${custom.css ? `<style>${scopeCSS(custom.css)}</style>` : ''}
       <header class="so-head">
         ${avatar(p, 'big')}
         <div class="so-who"><b>${esc(p.name || '')}</b><span>@${esc(p.handle || '')}</span>${p.bio ? `<p>${esc(p.bio)}</p>` : ''}</div>
@@ -329,7 +327,6 @@
         <p><span class="so-mood">${esc((d.line && d.line.mood) || '')}</span>${esc((d.line && d.line.text) || '') || `<span class="so-empty">${t('so.noLine')}</span>`}</p>
       </section>
       ${d.pair && d.pair.url ? `<section class="so-box so-pair"><img src="${esc(App.safeImg(d.pair.url))}" alt=""></section>` : ''}
-      ${custom.html ? `<section class="so-custom">${soHTML(custom.html)}</section>` : ''}
       ${banners.length ? `<section class="so-box"><h4>${t('so.banners')}</h4><div class="so-banners">${banners.map((b) => { const img = App.safeImg(b.p.banner_url); return `<button type="button" class="so-banner ${img ? 'img' : ''}" data-act="so-visit" data-id="${esc(b.id)}" title="${esc(b.p.name)} @${esc(b.p.handle)}">${img ? `<img src="${esc(img)}" alt="${esc(b.p.name)}">` : `${avatar(b.p)}<span>${esc(b.p.name)}</span>`}</button>`; }).join('')}</div></section>` : ''}
       <div class="so-layer">
         ${(d.stickers || []).map((s) => `<div class="so-st ${opts.mine && ui.so.selSt === s.id ? 'sel' : ''} ${opts.mine ? 'mine' : ''}" data-sid="${esc(s.id)}" style="left:${s.x}%;top:${s.y}%;width:${s.w}px;transform:translate(-50%,-50%) rotate(${s.r || 0}deg)">${s.emoji ? `<span style="font-size:${Math.round(s.w * 0.86)}px">${esc(s.emoji)}</span>` : `<img src="${esc(App.safeImg(s.url))}" alt="">`}${opts.mine && ui.so.selSt === s.id ? '<span class="h h-size" data-h="size"></span><button type="button" class="h h-del" data-h="del">×</button>' : ''}</div>`).join('')}
@@ -414,13 +411,6 @@
           <label class="switch"><input type="checkbox" data-change="so-banner-toggle" data-id="${esc(f.id)}" ${b ? 'checked' : ''}><span class="sw-track"></span>${esc(f.name)} <span class="muted small">@${esc(f.handle)}</span></label>
           <div class="so-banner-slot mini ${f.banner_url ? 'has' : ''}">${f.banner_url ? `<img src="${esc(App.safeImg(f.banner_url))}" alt="">` : `<span>${t('so.noBannerYet')}</span>`}</div>
         </div>`; }).join('')}` : `<p class="hint" style="margin:0">${t('so.noFriendsYet')}</p>`)}
-      ${sec(t('so.customTitle'), `
-        <p class="hint" style="margin:0">${t('so.customHelp')}</p>
-        <span class="label">HTML</span>
-        <textarea class="input code" rows="6" spellcheck="false" data-input="so-custom" data-k="html" placeholder="&lt;div class=&quot;hello&quot;&gt;🌊 어서 와!&lt;/div&gt;">${esc(d.custom.html)}</textarea>
-        <span class="label">CSS</span>
-        <textarea class="input code" rows="8" spellcheck="false" data-input="so-custom" data-k="css" placeholder=".hello { font-size: 22px; color: #2fa4de; }&#10;.so-box { border-radius: 0; }">${esc(d.custom.css)}</textarea>
-        <details class="ref"><summary>${t('so.customClasses')}</summary><div class="ref-cols"><div>${SO_CLASSES.map((c) => `<code>${c}</code>`).join(' ')}</div></div></details>`)}
       ${App.on('music') ? sec('BGM', `
         ${App.D.music.tracks.length ? `<select class="input select" data-change="so-bgm-pick"><option value="">${t('so.bgmNone')}</option>${App.D.music.tracks.map((x) => `<option value="${esc(x.id)}" ${d.bgm.trackId === x.id ? 'selected' : ''}>${esc(x.title)}${x.artist ? ' · ' + esc(x.artist) : ''}</option>`).join('')}</select>` : `<p class="hint" style="margin:0">${t('so.bgmEmpty')}</p><button class="btn small" data-act="nav" data-view="music">${t('so.bgmGo')}</button>`}
         ${d.bgm.url || d.bgm.yt ? `<div class="tip">♫ ${esc(d.bgm.title)} ${t('so.bgmSet')}</div>` : `<div class="tip">${t('so.bgmTip')}</div>`}`) : ''}`;
@@ -780,6 +770,7 @@
     'so-set-btn': (el) => { setPath(S().draft, el.dataset.k, el.dataset.v); dirty(); App.renderMain(); },
     'so-publish': busy(async () => {
       const d = JSON.parse(JSON.stringify(S().draft));
+      d.custom = { html: '', css: '' }; // 코드 꾸미기는 없앴어요
       d.todos = { auto: d.todos.auto, items: todayTodosForPage(S().draft) };
       await api().savePage(d);
       S().dirty = false; save();
