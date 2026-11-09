@@ -320,7 +320,7 @@
         <h4>${t('so.line')}</h4>
         <p><span class="so-mood">${esc((d.line && d.line.mood) || '')}</span>${esc((d.line && d.line.text) || '') || `<span class="so-empty">${t('so.noLine')}</span>`}</p>
       </section>
-      ${d.pair && d.pair.url ? `<section class="so-box so-pair"><h4>${t('so.pair')}</h4><img src="${esc(App.safeImg(d.pair.url))}" alt="">${d.pair.caption ? `<p>${esc(d.pair.caption)}</p>` : ''}</section>` : ''}
+      ${d.pair && d.pair.url ? `<section class="so-box so-pair"><img src="${esc(App.safeImg(d.pair.url))}" alt=""></section>` : ''}
       ${custom.html ? `<section class="so-custom">${soHTML(custom.html)}</section>` : ''}
       ${banners.length ? `<section class="so-box"><h4>${t('so.banners')}</h4><div class="so-banners">${banners.map((b) => { const img = App.safeImg(b.p.banner_url); return `<button type="button" class="so-banner ${img ? 'img' : ''}" data-act="so-visit" data-id="${esc(b.id)}" title="${esc(b.p.name)} @${esc(b.p.handle)}">${img ? `<img src="${esc(img)}" alt="${esc(b.p.name)}">` : `${avatar(b.p)}<span>${esc(b.p.name)}</span>`}</button>`; }).join('')}</div></section>` : ''}
       <div class="so-layer">
@@ -389,8 +389,7 @@
         <input class="input grow" maxlength="80" value="${esc(d.line.text)}" placeholder="${esc(t('so.linePh'))}" data-input="so-set" data-k="line.text"></div>`)}
       ${sec(t('so.pair'), `
         ${d.pair.url ? `<img class="so-pair-prev" src="${esc(App.safeImg(d.pair.url))}" alt="">` : ''}
-        <div class="row gap-xs"><button class="btn small" data-act="so-pair-upload">${svg('image')}${d.pair.url ? t('cc.bgChange') : t('so.pairUpload')}</button>${d.pair.url ? `<button class="btn small ghost" data-act="so-pair-del">${t('c.delete')}</button>` : ''}</div>
-        <input class="input" maxlength="60" value="${esc(d.pair.caption)}" placeholder="${esc(t('so.pairCaption'))}" data-input="so-set" data-k="pair.caption">`)}
+        <div class="row gap-xs"><button class="btn small" data-act="so-pair-upload">${svg('image')}${d.pair.url ? t('cc.bgChange') : t('so.pairUpload')}</button>${d.pair.url ? `<button class="btn small ghost" data-act="so-pair-del">${t('c.delete')}</button>` : ''}</div>`)}
       ${sec(t('so.stickers'), `
         <div class="emoji-grid small">${STICKER_EMOJI.map((e) => `<button type="button" data-act="so-st-emoji" data-v="${e}">${e}</button>`).join('')}</div>
         <div class="row gap-xs wrap"><button class="btn small" data-act="so-st-photo">${svg('image')}${t('so.photoSticker')}</button></div>
