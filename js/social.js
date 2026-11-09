@@ -2,7 +2,7 @@
 (function (App) {
   const { t, esc, svg, uid, todayStr } = App;
   const ui = App.ui;
-  ui.so = { tab: 'mine', visit: null, demo: false, place: null, selSt: null };
+  ui.so = { tab: 'mine', visit: null, demo: false, place: null, selSt: null, selR: null };
 
   const PAGE_W = 600;
   const BANNER_W = 400, BANNER_H = 100; // 배너는 모두 가로 4 : 세로 1
@@ -154,6 +154,12 @@
     async reactions(owner) { const { data } = await this.client().from('reactions').select('*').eq('page_owner', owner).order('created_at').limit(200); return data || []; },
     async addReaction(owner, r) { const u = await this.me(); const { error } = await this.client().from('reactions').insert({ page_owner: owner, author: u.id, ...r }); if (error) throw error; },
     async delReaction(id) { await this.client().from('reactions').delete().eq('id', id); },
+    async updReaction(id, patch) {
+      let { error } = await this.client().from('reactions').update(patch).eq('id', id);
+      // 크기(w) 칸이 아직 없는 서버면 위치·각도만 저장
+      if (error && 'w' in patch && /\bw\b|column/i.test(error.message || '')) { const p2 = { ...patch }; delete p2.w; ({ error } = await this.client().from('reactions').update(p2).eq('id', id)); }
+      if (error) throw error;
+    },
     // 내 기록(할 일·다이어리·디데이…) 계정에 저장
     async fileUp(id, blob) { const u = await this.me(); if (!u) return false; const { error } = await this.client().storage.from('userfiles').upload(`${u.id}/${id}`, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' }); if (error) throw error; return true; },
     async fileDown(id) { const u = await this.me(); if (!u) return null; const { data, error } = await this.client().storage.from('userfiles').download(`${u.id}/${id}`); if (error) return null; return data; },
@@ -222,7 +228,8 @@
     async delComment(id) { const d = this.load(); d.comments = d.comments.filter((c) => c.id !== id); this.persist(); },
     async reactions(owner) { return this.load().reactions.filter((r) => r.page_owner === owner); },
     async addReaction(owner, r) { this.load().reactions.push({ id: uid(), page_owner: owner, author: 'me', emoji: '', image_url: '', ...r, created_at: new Date().toISOString() }); this.persist(); },
-    async delReaction(id) { const d = this.load(); d.reactions = d.reactions.filter((r) => r.id !== id); this.persist(); }
+    async delReaction(id) { const d = this.load(); d.reactions = d.reactions.filter((r) => r.id !== id); this.persist(); },
+    async updReaction(id, patch) { const r = this.load().reactions.find((x) => x.id === id); if (r) Object.assign(r, patch); this.persist(); }
   };
 
   const api = () => (ui.so.demo ? Demo : Sb);
@@ -328,8 +335,10 @@
         ${(d.stickers || []).map((s) => `<div class="so-st ${opts.mine && ui.so.selSt === s.id ? 'sel' : ''} ${opts.mine ? 'mine' : ''}" data-sid="${esc(s.id)}" style="left:${s.x}%;top:${s.y}%;width:${s.w}px;transform:translate(-50%,-50%) rotate(${s.r || 0}deg)">${s.emoji ? `<span style="font-size:${Math.round(s.w * 0.86)}px">${esc(s.emoji)}</span>` : `<img src="${esc(App.safeImg(s.url))}" alt="">`}${opts.mine && ui.so.selSt === s.id ? '<span class="h h-size" data-h="size"></span><button type="button" class="h h-del" data-h="del">×</button>' : ''}</div>`).join('')}
         ${v.reactions.map((r) => {
           const who = v.names[r.author];
-          const canDel = r.author === st.me || v.owner === st.me;
-          return `<div class="so-react" style="left:${r.x}%;top:${r.y}%;transform:translate(-50%,-50%) rotate(${r.r || 0}deg)" title="${esc(who ? who.name : '')}">${r.image_url ? `<img src="${esc(App.safeImg(r.image_url))}" alt="">` : `<span>${esc(r.emoji)}</span>`}${canDel ? `<button type="button" class="so-react-x" data-act="so-react-del" data-id="${esc(r.id)}" aria-label="${t('c.delete')}">×</button>` : ''}</div>`;
+          const can = r.author === st.me || v.owner === st.me;
+          const sel = can && ui.so.selR === r.id;
+          const w = r.w || (r.image_url ? 90 : 46);
+          return `<div class="so-react ${can ? 'can' : ''} ${sel ? 'sel' : ''}" data-rid="${esc(r.id)}" style="left:${r.x}%;top:${r.y}%;width:${w}px;transform:translate(-50%,-50%) rotate(${r.r || 0}deg)" title="${esc(who ? who.name : '')}">${r.image_url ? `<img src="${esc(App.safeImg(r.image_url))}" alt="" draggable="false">` : `<span style="font-size:${Math.round(w * 0.86)}px">${esc(r.emoji)}</span>`}${sel ? `<span class="h h-rot" data-h="rot"></span><span class="h h-size" data-h="size"></span><button type="button" class="h h-del" data-h="del" aria-label="${t('c.delete')}">×</button>` : ''}</div>`;
         }).join('')}
       </div>
     </div>`;
@@ -530,7 +539,7 @@
   App.after.social = () => { fit(); App.hydrateAssets(App.$('#main')); App.$$('#soPage img').forEach((i) => { if (!i.complete) i.addEventListener('load', fit, { once: true }); }); };
   window.addEventListener('resize', () => { if (App.ui.view === 'social') fit(); });
   App.onLeave = App.onLeave || {};
-  App.onLeave.social = () => { ui.so.place = null; ui.so.selSt = null; };
+  App.onLeave.social = () => { ui.so.place = null; ui.so.selSt = null; ui.so.selR = null; };
 
   /* ---------- 내 페이지 스티커 끌기 / 반응 붙이기 ---------- */
   let drag = null;
@@ -541,6 +550,21 @@
     const px = ((ev.clientX - rect.left) / rect.width) * 100, py = ((ev.clientY - rect.top) / rect.height) * 100;
     // 이웃 페이지에 반응 붙이기
     if (ui.so.place && ui.so.tab === 'visit') { ev.preventDefault(); placeReaction(px, py); return; }
+    // 내가 붙인 스티커 / 내 페이지에 붙은 스티커는 눌러서 고르고 끌어서 고치기
+    const rEl = ev.target.closest('.so-react.can');
+    const v = st.view;
+    if (rEl && v) {
+      const r = v.reactions.find((x) => x.id === rEl.dataset.rid);
+      if (!r) return;
+      ev.preventDefault();
+      if (ev.target.dataset.h === 'del') { ui.so.selR = null; busy(async () => { await api().delReaction(r.id); refresh(); })(); return; }
+      if (ui.so.selR !== r.id) { ui.so.selR = r.id; ui.so.selSt = null; App.renderMain(); }
+      const el = App.$(`.so-react[data-rid="${r.id}"]`) || rEl;
+      const er = el.getBoundingClientRect();
+      rdrag = { r, el, mode: ev.target.dataset.h || 'move', sx: ev.clientX, sy: ev.clientY, x: r.x, y: r.y, w: r.w || (r.image_url ? 90 : 46), rect, cx: er.left + er.width / 2, cy: er.top + er.height / 2, moved: false };
+      return;
+    }
+    if (ui.so.selR) { ui.so.selR = null; App.renderMain(); }
     if (ui.so.tab !== 'edit') return;
     const el = ev.target.closest('.so-st.mine');
     const d = S().draft;
@@ -564,6 +588,38 @@
     if (el) { el.style.left = s.x + '%'; el.style.top = s.y + '%'; el.style.width = s.w + 'px'; const sp = el.querySelector('span:not(.h)'); if (sp) sp.style.fontSize = Math.round(s.w * 0.86) + 'px'; }
   });
   document.addEventListener('pointerup', () => { if (drag) { drag = null; dirty(); } });
+
+  let rdrag = null;
+  document.addEventListener('pointermove', (ev) => {
+    if (!rdrag) return;
+    const d = rdrag, r = d.r;
+    if (Math.abs(ev.clientX - d.sx) + Math.abs(ev.clientY - d.sy) > 2) d.moved = true;
+    if (d.mode === 'size') {
+      const d0 = Math.hypot(d.sx - d.cx, d.sy - d.cy) || 1;
+      r.w = Math.round(Math.max(20, Math.min(400, d.w * (Math.hypot(ev.clientX - d.cx, ev.clientY - d.cy) / d0))));
+    } else if (d.mode === 'rot') {
+      r.r = Math.round((Math.atan2(ev.clientY - d.cy, ev.clientX - d.cx) * 180) / Math.PI + 90);
+      if (Math.abs(r.r % 90) < 4) r.r = Math.round(r.r / 90) * 90;
+    } else {
+      r.x = Math.max(0, Math.min(100, d.x + ((ev.clientX - d.sx) / d.rect.width) * 100));
+      r.y = Math.max(0, Math.min(100, d.y + ((ev.clientY - d.sy) / d.rect.height) * 100));
+    }
+    const el = App.$(`.so-react[data-rid="${r.id}"]`);
+    if (!el) return;
+    el.style.left = r.x + '%'; el.style.top = r.y + '%'; el.style.width = (r.w || d.w) + 'px';
+    el.style.transform = `translate(-50%,-50%) rotate(${r.r || 0}deg)`;
+    const sp = el.querySelector('span:not(.h)'); if (sp) sp.style.fontSize = Math.round((r.w || d.w) * 0.86) + 'px';
+  });
+  const rEnd = () => {
+    if (!rdrag) return;
+    const { r, moved } = rdrag; rdrag = null;
+    if (!moved) return;
+    const patch = { x: Math.round(r.x * 10) / 10, y: Math.round(r.y * 10) / 10, r: Math.round(r.r || 0) };
+    if (r.w) patch.w = r.w;
+    busy(async () => { await api().updReaction(r.id, patch); })();
+  };
+  document.addEventListener('pointerup', rEnd);
+  document.addEventListener('pointercancel', rEnd);
 
   async function placeReaction(x, y) {
     const pl = ui.so.place;

@@ -717,7 +717,9 @@ kbd { font-family: inherit; font-size: 12px; border: 1px solid var(--line-strong
 .so-st.mine { cursor: move; }
 .so-st.sel { outline: 2px dashed var(--accent); outline-offset: 5px; }
 .so-react { font-size: 40px; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .18)); }
-.so-react img { width: 90px; display: block; }
+.so-react img { width: 100%; display: block; pointer-events: none; }
+.so-react.can { cursor: move; }
+.so-react.sel { outline: 2px dashed var(--accent); outline-offset: 5px; z-index: 5; }
 .so-react-x { position: absolute; top: -8px; right: -10px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--ink); color: var(--paper); font-size: 12px; cursor: pointer; opacity: 0; }
 .so-react:hover .so-react-x, .so-react-x:focus-visible { opacity: 1; }
 .so-page.placing .so-react, .so-page.placing .so-st { pointer-events: none; }
