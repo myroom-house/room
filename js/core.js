@@ -203,7 +203,6 @@
   function renderProfile() {
     const p = App.D.profile;
     const img = App.safeImg(p.avatar);
-    const links = (p.links || []).filter((l) => App.safeUrl(l.url));
     $('#profile').innerHTML = `
       <div class="profile-row">
         <div class="avatar">${img ? `<img src="${esc(img)}" alt="">` : esc(p.emoji || '🌱')}</div>
@@ -212,7 +211,7 @@
           <p class="profile-status">${esc(p.status)}</p>
         </div>
       </div>
-      ${links.length ? `<ul class="profile-links">${links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`).join('')}</ul>` : ''}`;
+      `;
   }
   App.renderProfile = renderProfile;
 

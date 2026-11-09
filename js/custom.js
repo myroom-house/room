@@ -57,11 +57,6 @@
           <label class="field"><span class="label">${t('cu.name')}</span><input class="input" maxlength="30" data-input="profile-name" value="${esc(p.name)}"></label>
           <label class="field"><span class="label">${t('cu.status')}</span><input class="input" maxlength="80" data-input="profile-status" value="${esc(p.status)}"></label>
           <p class="hint" style="margin:-4px 0 0">${t('cu.profileSync')}</p>
-          <span class="label">${t('cu.links')}</span>
-          <div class="stack-s">${(p.links || []).map((l, i) => `
-            <div class="row gap-xs"><input class="input" style="flex:0 0 110px" data-input="link-label" data-i="${i}" value="${esc(l.label)}" placeholder="${esc(t('cu.linkLabel'))}"><input class="input grow" data-input="link-url" data-i="${i}" value="${esc(l.url)}" placeholder="https://"><button class="icon-btn" data-act="link-del" data-i="${i}" aria-label="${t('c.delete')}">${svg('x')}</button></div>`).join('')}
-          </div>
-          <button class="btn small" data-act="link-add">${svg('plus')}${t('c.add')}</button>
         </div>
 
         <div class="card">
