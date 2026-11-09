@@ -26,6 +26,7 @@
     ddays: [],      // {id, title, date, yearly, countFirst, color, pinned}
     fonts: [],      // {id, name, family, kind:'file'|'css'|'local', assetId?, css?}
     stickers: [],   // {id, assetId, name}
+    homeStickers: [], // 홈에 붙인 스티커 {id, assetId, x(%), y(px), w, r}
     focus: { focus: 25, short: 5, long: 15, rounds: 4, sound: true, autoNext: true },
     focusLog: {},   // {date: {sessions, minutes}}
     chat: { draft: null, presets: [], saved: [] },  // 채팅 발췌기

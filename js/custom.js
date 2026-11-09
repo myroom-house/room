@@ -22,6 +22,8 @@
           </div>
         </div>
 
+        ${App.homeStickerCard ? App.homeStickerCard() : ''}
+
         <div class="card wide">
           <div class="card-head"><h3>${t('cu.fonts')}</h3>
             <div class="row gap-xs wrap">
@@ -71,7 +73,7 @@
       </div>
     </section>`;
   };
-  App.after.custom = () => {};
+  App.after.custom = () => { App.hydrateAssets(App.$('#main')); };
 
   function parseFamily(css) {
     let m = css.match(/font-family\s*:\s*['"]?([^;'"}]+)/i);

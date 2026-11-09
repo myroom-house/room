@@ -610,7 +610,7 @@
       const files = picked.filter((f) => f.type === 'image/png' || f.type === 'image/gif' || /\.(png|gif)$/i.test(f.name));
       if (picked.length > files.length) App.toast(t('dk.stickerOnly'));
       for (const f of files) {
-        const blob = await Assets.shrinkImage(f, 800, true);
+        const blob = f.type === 'image/gif' ? f : await Assets.shrinkImage(f, 800, true);
         const id = 's_' + uid();
         await Assets.put(id, blob);
         App.silent((d) => d.stickers.push({ id: uid(), assetId: id, name: f.name }));

@@ -75,6 +75,8 @@
 
     return `
     <section class="view home">
+      ${App.homeStickerBar ? App.homeStickerBar() : ''}
+      <div class="home-body">
       <header class="hello">
         <p class="muted">${fmt(td, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
         <h2 class="hello-line">${esc(t('home.g.' + g) + (name ? t('home.sep') + name : ''))}</h2>
@@ -83,10 +85,12 @@
         <div class="stack">${left.join('')}</div>
         <div class="stack">${right.join('')}</div>
       </div>
+      ${App.homeStickerLayer ? App.homeStickerLayer() : ''}
+      </div>
     </section>`;
   };
 
-  App.after.home = function () {};
+  App.after.home = function () { const l = App.$('#homeStk'); if (l) App.hydrateAssets(l); };
 
   App.A['home-pomo'] = () => {
     App.focusState.tab = 'pomo';
