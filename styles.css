@@ -1082,3 +1082,5 @@ body.ev-dragging, body.ev-dragging * { cursor: grabbing !important; user-select:
 .cc-nar { font-style: italic; }
 .clip-fmt { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .clip-fmt i { font-style: italic; font-weight: 700; }
+/* 폰(좁은 화면)에서는 홈 스티커 숨기기 */
+@media (max-width: 760px) { .home-stickers, .hs-bar { display: none !important; } }
