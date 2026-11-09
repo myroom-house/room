@@ -90,7 +90,8 @@
     strawberry: { bg: '#fcf1f4', paper: '#ffffff', ink: '#4a2b36', accent: '#e46b92' },
     mint: { bg: '#eff8f4', paper: '#ffffff', ink: '#1f3a33', accent: '#2a9d7f' },
     paper: { bg: '#f3efe6', paper: '#fffdf8', ink: '#2e2b26', accent: '#7a6a52' },
-    night: { bg: '#15171c', paper: '#1d2027', ink: '#e8eaf0', accent: '#8ea8ff' }
+    night: { bg: '#15171c', paper: '#1d2027', ink: '#e8eaf0', accent: '#8ea8ff' },
+    christmas: { bg: '#f6efe4', paper: '#fffdf8', ink: '#1e3a2b', accent: '#c8323c' }
   };
   App.EVENT_COLORS = ['#5b7cfa', '#e46b92', '#2a9d7f', '#e89a1c', '#9467d8', '#7d8594'];
   App.safeColor = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : App.EVENT_COLORS[0]);

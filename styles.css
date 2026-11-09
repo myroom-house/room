@@ -33,6 +33,12 @@
 [data-theme="strawberry"] { --bg: #fcf1f4; --ink: #4a2b36; --ink-soft: #94707c; --line: #f4e2e8; --line-strong: #ebcfd9; --accent: #e46b92; --accent-soft: #fde9ef; --paper-2: #fff8fa; }
 [data-theme="mint"] { --bg: #eff8f4; --ink: #1f3a33; --ink-soft: #6a857e; --line: #e0eee8; --line-strong: #cbe2d8; --accent: #2a9d7f; --accent-soft: #e3f5ee; --paper-2: #f7fcfa; }
 [data-theme="paper"] { --bg: #f3efe6; --paper: #fffdf8; --paper-2: #faf7f0; --ink: #2e2b26; --ink-soft: #857e70; --line: #ece5d8; --line-strong: #ddd4c3; --accent: #7a6a52; --accent-soft: #f1ebe0; }
+[data-theme="christmas"] {
+  --bg: #f6efe4; --paper: #fffdf8; --paper-2: #fbf6ee; --ink: #1e3a2b; --ink-soft: #6f7d6f;
+  --line: #ece2d2; --line-strong: #ddcfb9; --accent: #c8323c; --accent-ink: #ffffff; --accent-soft: #fbe7e5;
+  --btn-primary: #1f5c3f; --btn-primary-ink: #fffdf8;
+}
+[data-theme="christmas"] .nav button[aria-current="page"] { background: #1f5c3f; color: #fffdf8; }
 [data-theme="night"] {
   --bg: #15171c; --paper: #1d2027; --paper-2: #22252d; --ink: #e8eaf0; --ink-soft: #9aa0ad;
   --line: #2b2f38; --line-strong: #383d48; --accent: #8ea8ff; --accent-ink: #12141a; --accent-soft: #252d48;

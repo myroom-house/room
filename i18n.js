@@ -300,6 +300,7 @@ window.I18N = {
   'set.coming': ['업데이트 예정', 'Coming soon', 'アップデート予定'],
   'set.comingList': ['PC·폰 내 기록 연동 · 외주 관리 · 독서 기록 · 가계부 · TRPG 기록 · 작업시간 추적 · 통계 · 오버레이', 'Commissions · Reading log · Budget · TRPG log · Work-time tracker · Stats · Overlay', '外注管理・読書記録・家計簿・TRPG記録・作業時間・統計・オーバーレイ'],
   'set.browserNote': ['지금은 브라우저 미리보기예요. 데이터는 이 브라우저에만 저장되고, 백업 저장과 일부 글꼴은 데스크탑 앱에서만 동작해요', 'This is a browser preview. Data stays in this browser, and backups and some fonts only work in the desktop app', 'ブラウザのプレビューです。データはこのブラウザにだけ保存され、バックアップや一部フォントはアプリでのみ動作します'],
+  'theme.christmas': '크리스마스',
   'theme.editor': ['에디터', 'Editor', 'エディター'],
   'home.openCc': ['열기', 'Open', '開く'],
   'home.ccHint': ['AI 채팅을 카드 이미지로 만들어요 · 보관함 {n}개', 'Turn AI chats into image cards · {n} saved', 'AIチャットを画像カードに・保管 {n}件'],
