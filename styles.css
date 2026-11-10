@@ -1209,3 +1209,12 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
 .nav .nav-guide { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-s); color: var(--ink-soft); text-decoration: none; font-weight: 500; }
 .nav .nav-guide:hover { background: var(--paper-2); color: var(--ink); }
 @media (max-width: 760px) { .nav .nav-guide { white-space: nowrap; } }
+
+/* 메모: 좁은 화면에서는 글을 한 줄 다 쓰고 버튼은 아래 줄로 */
+@media (max-width: 760px) {
+  .memo-item { flex-wrap: wrap; gap: 4px 12px; padding: 12px 14px 8px; }
+  .memo-item > .memo-text, .memo-item > .memo-check { flex: 1 1 100%; }
+  .memo-meta { width: 100%; flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; }
+  .memo-meta .muted:first-child { margin-right: auto; }
+  .memo-meta .icon-btn { width: 32px; height: 32px; }
+}

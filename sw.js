@@ -1,5 +1,5 @@
 // 오프라인에서도 열리게 해주는 서비스 워커 (웹 버전 전용)
-const VERSION = 'myroom-v40';
+const VERSION = 'myroom-v41';
 const CORE = ["./", "index.html", "styles.css", "i18n.js", "manifest.webmanifest", "fonts/fonts.css", "fonts/fonts-manifest.js", "vendor/html-to-image.js", "icons/icon-192.png", "icons/apple-touch-icon.png", "icons/favicon.png", "js/assets.js", "js/bookmark.js", "js/calendar.js", "js/core.js", "js/custom.js", "js/dday.js", "js/diary.js", "js/excerpt.js", "js/export.js", "js/focus.js", "js/home.js", "js/homedeco.js", "js/stickers.js", "js/memo.js", "js/music.js", "js/settings.js", "js/store.js", "js/tasks.js", "js/social.js", "js/account.js", "vendor/supabase.js", "config.js", "vendor/591.supabase.js"];
 
 self.addEventListener('install', (e) => {
