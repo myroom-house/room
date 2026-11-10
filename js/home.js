@@ -79,7 +79,6 @@
       <div class="home-body">
       <header class="hello">
         <p class="muted">${fmt(td, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
-        <h2 class="hello-line">${esc(t('home.g.' + g) + (name ? t('home.sep') + name : ''))}</h2>
       </header>
       <div class="home-grid">
         <div class="stack">${left.join('')}</div>
