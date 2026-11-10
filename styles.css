@@ -1218,3 +1218,15 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
   .memo-meta .muted:first-child { margin-right: auto; }
   .memo-meta .icon-btn { width: 32px; height: 32px; }
 }
+
+/* 슬라이더 옆 직접 입력 칸 */
+.range-row input[type="range"] { flex: 1; min-width: 0; }
+.range-num { display: inline-flex; align-items: center; gap: 2px; flex: none; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: 0 6px 0 0; }
+.range-num:focus-within { border-color: var(--accent); }
+.range-num input { width: 48px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12.5px; padding: 4px 2px 4px 7px; text-align: right; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+.range-num input::-webkit-outer-spin-button, .range-num input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.range-num input:focus { outline: none; }
+.range-num i { font-style: normal; font-size: 11px; color: var(--ink-soft); }
+/* 슬라이더가 있는 칸은 한 줄에 하나씩 (숫자 칸 때문에 좁아지지 않게) */
+.diary-view .form-grid:has(> label > .range-row), .diary-view .grid-2:has(> label > .range-row) { grid-template-columns: 1fr !important; display: grid; gap: 6px; }
+.diary-view .form-grid > label:has(> .range-row), .diary-view .grid-2 > label:has(> .range-row) { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 8px; }

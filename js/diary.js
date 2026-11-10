@@ -209,7 +209,8 @@
     return `<button type="button" class="ts-btn" ${attrs} title="${t('dk.ts.' + s)}"><span class="dk-text ts-${s} preview" style="--deco:${dc};${INKED.includes(s) ? `color:${inkFor(dc)};` : ''}">${t('dk.tsSample.' + s)}</span><small>${t('dk.ts.' + s)}</small></button>`;
   }
   const decoRow = (val) => `<div class="colors">${DECO_COLORS.map((c) => `<button type="button" class="color-dot" style="background:${c}" data-act="dk-item-set" data-k="deco" data-v="${c}" aria-pressed="${val === c}" aria-label="${c}"></button>`).join('')}<label class="color-pick ${DECO_COLORS.includes(val) ? '' : 'on'}" title="${t('cc.pickColor')}"><input type="color" value="${val}" data-input="dk-item-color" data-k="deco"><span>${t('cc.custom')}</span></label></div>`;
-  const rangeRow = (input, key, min, max, step, val, unit) => `<div class="range-row"><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-input="${input}" data-k="${key}"><output>${val}${unit || ''}</output></div>`;
+  // 슬라이더 + 직접 입력 칸 (마우스 휠로 한 칸씩, Shift는 크게)
+  const rangeRow = (input, key, min, max, step, val, unit) => `<div class="range-row" data-step="${step}"><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-input="${input}" data-k="${key}"><span class="range-num"><input type="number" inputmode="decimal" min="${min}" step="${step}" value="${val}" data-input="${input}" data-k="${key}" aria-label="${key}">${unit ? `<i>${unit}</i>` : ''}</span></div>`;
 
   function renderSelPanel() {
     const box = App.$('#dkSelPanel');
@@ -849,11 +850,33 @@
     'dk-item-sel': (el) => { const it = selItem(); if (!it) return; it[el.dataset.k] = el.value; touch(); renderItems(); }
   });
 
-  const showOut = (el, v) => { const o = el.parentElement && el.parentElement.querySelector('output'); if (o) o.textContent = v + ((o.textContent.match(/[a-z%°]+$/i) || [''])[0]); };
+  // 슬라이더를 움직이면 숫자 칸을, 숫자를 치면 슬라이더를 같이 맞춰요
+  const showOut = (el, v) => {
+    const row = el.closest && el.closest('.range-row'); if (!row) return;
+    row.querySelectorAll('input').forEach((x) => { if (x !== el) x.value = v; });
+  };
+  // 숫자 칸이 비었거나 이상한 값이면 무시
+  const badNum = (el) => el.type === 'number' && (el.value === '' || isNaN(Number(el.value)) || Number(el.value) < Number(el.min));
+  // 마우스 휠로 미세 조절
+  document.addEventListener('wheel', (ev) => {
+    const row = ev.target.closest && ev.target.closest('.dk-tools .range-row, .dk-sel .range-row, .range-row');
+    if (!row || App.ui.view !== 'diary') return;
+    const rg = row.querySelector('input[type="range"]'); if (!rg) return;
+    ev.preventDefault();
+    const step = Number(row.dataset.step) || 1;
+    const num = row.querySelector('input[type="number"]');
+    const curV = Number((num && num.value) || rg.value);
+    let v = curV + (ev.deltaY < 0 ? 1 : -1) * step * (ev.shiftKey ? 5 : 1);
+    v = Math.max(Number(rg.min), v);
+    v = Math.round(v / step) * step; v = Number(v.toFixed(3));
+    const target = num || rg; target.value = v;
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+  }, { passive: false });
   Object.assign(App.I, {
     'diary-title': (el) => { cur().title = el.value; touch(); },
     'diary-body': (el) => { cur().body = el.value; touch(); },
     'dk-num': (el) => {
+      if (badNum(el)) return;
       const e = cur(); const k = el.dataset.k; const v = Number(el.value);
       e[k] = v; touch(); showOut(el, v);
       const page = App.$('#dkPage'), body = App.$('.dk-body'), title = App.$('.dk-title'), bg = App.$('.dk-bgimg');
@@ -865,7 +888,7 @@
     },
     'dk-color': (el) => { const e = cur(); e[el.dataset.k] = el.value; touch(); const page = App.$('#dkPage'); if (page) { if (el.dataset.k === 'color') page.style.setProperty('--ink', el.value); else page.style.setProperty('--pc', el.value); } },
     'dk-item-num': (el) => {
-      const it = selItem(); if (!it) return;
+      const it = selItem(); if (!it || badNum(el)) return;
       const v = Number(el.value); it[el.dataset.k] = v; touch(); showOut(el, v);
       const node = App.$(`[data-iid="${it.id}"]`);
       if (!node) return;
