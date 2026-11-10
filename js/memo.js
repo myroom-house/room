@@ -42,7 +42,6 @@
       <div class="memo-meta">
         ${m.kind === 'check' ? `<span class="muted small">${done}/${m.items.length}</span>` : ''}
         ${App.dueBadge(m)}
-        <span class="muted small">${timeOf(created(m))}</span>
         <label class="icon-btn due-btn" title="${t('memo.setDue')}">${svg('calendar')}<input type="date" value="${esc(m.due || '')}" data-change="memo-due" data-id="${m.id}"></label>
         ${m.due ? `<button class="icon-btn" data-act="memo-due-clear" data-id="${m.id}" title="${t('memo.clearDue')}">${svg('x')}</button>` : ''}
         <button class="icon-btn ${m.pinned ? 'on' : ''}" data-act="memo-pin" data-id="${m.id}" title="${m.pinned ? t('memo.unpin') : t('memo.pin')}" aria-pressed="${!!m.pinned}">${svg('pin')}</button>
