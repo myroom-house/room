@@ -16,7 +16,7 @@
       <textarea class="input fb-text" id="fbText" rows="5" maxlength="3000" placeholder="${esc(t('fb.ph.' + ui.fb.kind))}"></textarea>
       <input class="input" id="fbReply" type="email" maxlength="120" placeholder="${esc(t('fb.replyPh'))}" style="margin-top:8px">
       <label class="check-line"><input type="checkbox" id="fbInfo" checked> <span>${t('fb.withInfo')}</span></label>
-      <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn primary" data-act="fb-send" ${ui.fb.sending ? 'disabled' : ''}>${svg('send') || ''}${ui.fb.sending ? t('fb.sending') : t('fb.send')}</button></div>`
+      <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn primary" data-act="fb-send" ${ui.fb.sending ? 'disabled' : ''}>${ui.fb.sending ? t('fb.sending') : t('fb.send')}</button></div>`
       : `<p class="muted small" style="margin:0">${t('fb.notReady')}</p>`}
     </div>`;
   };
