@@ -32,7 +32,7 @@
   ui.dkTab = 'sticker';
   ui.dkSel = null;
   ui.dkScale = 1;
-  ui.dkView = 'list';        // list: 목록 / read: 완성본 보기 / edit: 편집
+  ui.dkView = 'book';        // book: 펼친 다이어리 / edit: 편집
 
   const D = () => App.D;
   const cur = () => D().diary.find((x) => x.id === ui.diaryId);
@@ -355,58 +355,303 @@
     </div>`;
   }
   const dayLabel = (e) => fmt(e.date, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-  const emptyCard = () => `<div class="card empty-card"><p>${t('diary.empty')}</p><button class="btn primary" data-act="diary-new" data-date="${todayStr()}">${svg('plus')}${t('home.writeDiary')}</button></div>`;
 
-  // 목록: 꾸민 페이지를 작게 미리보기
-  function listView() {
-    const list = sorted();
-    let last = '', html = '';
-    for (const x of list) {
-      const mon = x.date.slice(0, 7);
-      if (mon !== last) { if (last) html += '</div>'; html += `<h3 class="dk-month">${fmt(x.date, { year: 'numeric', month: 'long' })}</h3><div class="dk-gallery">`; last = mon; }
-      const title = (x.title || '').trim() || ((x.items || []).find((i) => i.type === 'text' && (i.text || '').trim()) || {}).text || (x.body || '').trim();
-      html += `<button type="button" class="dk-card" data-act="diary-open" data-id="${x.id}">
-        <span class="dk-thumb">${staticPage(x)}</span>
-        <span class="dk-cap"><b>${App.parse(x.date).getDate()}${t('diary.dayUnit')}</b><span class="muted small">${fmt(x.date, { weekday: 'short' })}</span><span class="dk-mw">${esc(x.mood || '')}${esc(x.weather || '')}</span></span>
-        ${title ? `<span class="dk-cap-t">${esc(String(title).split('\n')[0].slice(0, 40))}</span>` : ''}
-      </button>`;
-    }
-    if (last) html += '</div>';
-    return `<section class="view diary-view">
-      <header class="view-head"><h2 class="view-title">${t('nav.diary')} <span class="count">${list.length}</span></h2>
-        <button class="btn primary" data-act="diary-new" data-date="${todayStr()}">${svg('plus')}${t('diary.new')}</button></header>
-      ${list.length ? html : emptyCard()}
-    </section>`;
+  /* ---------- 다이어리 책: 펼친 두 장, 넘기기 ---------- */
+  const COVER = { cover: true }, BLANK = { blank: true };
+  const single = () => window.innerWidth <= 760;
+  const madeOf = (x) => x.made || x.updatedAt || '';
+  const pagesAsc = () => [...D().diary].sort((a, b) => a.date.localeCompare(b.date) || madeOf(a).localeCompare(madeOf(b)) || String(a.id).localeCompare(String(b.id)));
+  const bookSeq = () => [...pagesAsc(), BLANK];
+  const spreadCount = () => { const n = bookSeq().length; return single() ? n + 1 : 1 + Math.ceil(n / 2); };
+  function spreadAt(i) {
+    const seq = bookSeq();
+    if (i <= 0) return single() ? [COVER] : [null, COVER];
+    if (single()) return [seq[i - 1] || null];
+    return [seq[2 * i - 2] || null, seq[2 * i - 1] || null];
+  }
+  function spreadOf(id) {
+    const i = pagesAsc().findIndex((x) => x.id === id);
+    if (i < 0) return 0;
+    return single() ? i + 1 : Math.floor(i / 2) + 1;
+  }
+  const DAY_MAX = 2;
+  const dayCount = (date) => D().diary.filter((x) => x.date === date).length;
+  const coverOf = () => Object.assign({ color: '#8a9bb0', image: '', fit: 'full', title: '' }, D().diaryCover || {});
+  const COVER_COLORS = ['#8a9bb0', '#2f4a6b', '#c95d6e', '#e9b8c4', '#4f7d6a', '#b8d4c6', '#c49a5c', '#efe3cc', '#6d5a8a', '#2b2b2b'];
+
+  function coverHTML() {
+    const c = coverOf();
+    return `<div class="bk-cover fit-${esc(c.fit)}" style="--cv:${App.safeColor(c.color)}">
+      ${c.image ? `<div class="bk-cover-img"><img data-asset="${esc(c.image)}" alt=""></div>` : ''}
+      ${c.title ? `<div class="bk-cover-title">${esc(c.title)}</div>` : ''}
+    </div>`;
+  }
+  function blankHTML() {
+    return `<div class="bk-blank"><button type="button" class="bk-blank-btn" data-act="bk-new">${svg('plus')}<b>${t('bk.newPage')}</b><span>${t('bk.newPageHint')}</span></button></div>`;
+  }
+  function sideHTML(p) {
+    if (!p) return '<div class="bk-none"></div>';
+    if (p.cover) return coverHTML();
+    if (p.blank) return blankHTML();
+    return staticPage(p, 'bkp-' + p.id);
+  }
+  function labelHTML(p) {
+    if (!p) return '<div class="bk-label"></div>';
+    if (p.cover) return `<div class="bk-label"><b>${t('bk.cover')}</b><button class="btn small" data-act="bk-cover">${svg('image')}${t('bk.coverEdit')}</button></div>`;
+    if (p.blank) return `<div class="bk-label"><span class="muted">${t('bk.blank')}</span></div>`;
+    return `<div class="bk-label">
+      <span class="bk-day"><b>${dayLabel(p)}</b><span class="dk-mw">${esc(p.mood || '')} ${esc(p.weather || '')}</span></span>
+      <span class="row gap-xs">
+        ${dayCount(p.date) < DAY_MAX ? `<button class="btn small ghost" data-act="bk-same" data-date="${p.date}" title="${t('bk.sameDay')}">${svg('plus')}${t('bk.sameDayShort')}</button>` : ''}
+        <button class="btn small primary" data-act="bk-edit" data-id="${p.id}">${svg('edit')}${t('dk.edit')}</button>
+      </span>
+    </div>`;
   }
 
-  // 완성본 보기: 편집을 눌러야 고칠 수 있어요
-  function readView(e) {
-    const list = sorted();
-    const idx = list.findIndex((x) => x.id === e.id);
-    const older = list[idx + 1], newer = list[idx - 1];
-    return `<section class="view diary-view">
+  function bookView() {
+    const one = single();
+    if (ui.dkSingle !== one || ui.dkSpread == null) {
+      // 처음이거나 화면 폭이 바뀌면, 보던 장(없으면 가장 최근 장)으로
+      const last = pagesAsc().slice(-1)[0];
+      const anchor = D().diary.some((x) => x.id === ui.diaryId) ? ui.diaryId : last && last.id;
+      ui.dkSpread = anchor ? spreadOf(anchor) : 0;
+      ui.dkSingle = one;
+    }
+    const n = spreadCount();
+    ui.dkSpread = Math.max(0, Math.min(n - 1, ui.dkSpread));
+    const sp = spreadAt(ui.dkSpread);
+    const entries = sp.filter((p) => p && !p.cover && !p.blank);
+    return `<section class="view diary-view bk-view">
       <header class="view-head dk-bar">
         <div class="row gap-xs wrap">
-          <button class="btn small ghost" data-act="dk-back">${svg('left')}${t('diary.list')}</button>
-          <button class="icon-btn" data-act="diary-open" data-id="${older ? older.id : ''}" ${older ? '' : 'disabled'} aria-label="${t('c.prev')}">${svg('left')}</button>
-          <span class="dk-day"><b>${dayLabel(e)}</b><span class="dk-mw">${esc(e.mood || '')} ${esc(e.weather || '')}</span></span>
-          <button class="icon-btn" data-act="diary-open" data-id="${newer ? newer.id : ''}" ${newer ? '' : 'disabled'} aria-label="${t('c.next')}">${svg('right')}</button>
+          <h2 class="view-title">${t('nav.diary')}</h2>
+          <input type="date" class="input date-input" data-change="bk-jump" value="${entries[0] ? entries[0].date : todayStr()}" title="${t('bk.jump')}" aria-label="${t('bk.jump')}">
         </div>
         <div class="row gap-xs wrap">
-          <button class="btn small" data-act="dk-export" data-how="copy" title="${t('dk.copyImg')}">${svg('copy')}</button>
-          <button class="btn small" data-act="dk-export" data-how="save">${svg('down')}${t('dk.saveImg')}</button>
-          <button class="icon-btn" data-act="diary-del" title="${t('c.delete')}">${svg('trash')}</button>
-          <button class="btn primary" data-act="dk-edit">${svg('edit')}${t('dk.edit')}</button>
+          ${entries.length ? `<button class="btn small" data-act="bk-export">${svg('down')}${t('dk.saveImg')}</button>` : ''}
+          <button class="btn small primary" data-act="bk-new">${svg('plus')}${t('bk.newToday')}</button>
         </div>
       </header>
-      <div class="dk-read-stage" id="dkReadStage"><div class="dk-scale" id="dkReadScale">${staticPage(e, 'dkRead')}</div></div>
+      <div class="bk-stage" id="bkStage">
+        <div class="bk-labels ${one ? 'one' : ''}" id="bkLabels">${sp.map(labelHTML).join('')}</div>
+        <div class="bk-row">
+          <button class="bk-nav" data-act="bk-turn" data-d="-1" ${ui.dkSpread > 0 ? '' : 'disabled'} aria-label="${t('c.prev')}">${svg('left')}</button>
+          <div class="bk-wrap" id="bkWrap">
+            <div class="bk ${one ? 'one' : ''} ${ui.dkSpread === 0 && !one ? 'closed' : ''}" id="bk">
+              ${one ? `<div class="bk-side r" id="bkR">${sideHTML(sp[0])}</div>` : `<div class="bk-side l" id="bkL">${sideHTML(sp[0])}</div><div class="bk-side r" id="bkR">${sideHTML(sp[1])}</div><div class="bk-gutter"></div>`}
+            </div>
+          </div>
+          <button class="bk-nav" data-act="bk-turn" data-d="1" ${ui.dkSpread < n - 1 ? '' : 'disabled'} aria-label="${t('c.next')}">${svg('right')}</button>
+        </div>
+        <p class="bk-count">${ui.dkSpread === 0 ? t('bk.cover') : `${ui.dkSpread} / ${n - 1}`}<span class="muted small"> · ${t('bk.turnHint')}</span></p>
+      </div>
     </section>`;
   }
 
+  function fitBook() {
+    const stage = App.$('#bkStage'), wrap = App.$('#bkWrap'), bk = App.$('#bk');
+    if (!stage || !wrap || !bk) return;
+    const W = single() ? PAGE_W : PAGE_W * 2;
+    const navW = single() ? 0 : 100;
+    const top = wrap.getBoundingClientRect().top;
+    const availH = Math.max(320, window.innerHeight - Math.max(0, top) - 70);
+    const s = Math.min(1, (stage.clientWidth - navW) / W, availH / PAGE_H);
+    bk.style.transform = `scale(${s})`;
+    wrap.style.width = W * s + 'px'; wrap.style.height = PAGE_H * s + 'px';
+    const lb = App.$('#bkLabels'); if (lb) lb.style.width = W * s + 'px';
+    ui.bkScale = s;
+  }
+
+  /* 한 장 넘기기 — 손으로 끌 때는 progress를 직접, 버튼은 자동 */
+  let turning = null;
+  function startTurn(dir) {
+    if (turning) return null;
+    const to = ui.dkSpread + dir;
+    if (to < 0 || to >= spreadCount()) return null;
+    const bk = App.$('#bk'); if (!bk) return null;
+    const one = single();
+    const nw = spreadAt(to);
+    const leaf = document.createElement('div');
+    const front = document.createElement('div'), back = document.createElement('div');
+    front.className = 'bk-face front'; back.className = 'bk-face back';
+    leaf.append(front, back);
+    let target;
+    if (one) {
+      const R = App.$('#bkR');
+      leaf.className = 'bk-leaf r';
+      if (dir > 0) { front.append(...R.childNodes); R.innerHTML = sideHTML(nw[0]); target = -180; leaf.dataset.from = 0; }
+      else { front.innerHTML = sideHTML(nw[0]); target = 0; leaf.dataset.from = -180; }
+      back.innerHTML = '<div class="bk-backpaper"></div>';
+    } else if (dir > 0) {
+      const R = App.$('#bkR');
+      leaf.className = 'bk-leaf r';
+      front.append(...R.childNodes);
+      back.innerHTML = sideHTML(nw[0]);
+      R.innerHTML = sideHTML(nw[1]);
+      target = -180; leaf.dataset.from = 0;
+    } else {
+      const L = App.$('#bkL');
+      leaf.className = 'bk-leaf l';
+      front.append(...L.childNodes);
+      back.innerHTML = sideHTML(nw[1]);
+      L.innerHTML = sideHTML(nw[0]);
+      target = 180; leaf.dataset.from = 0;
+    }
+    bk.classList.remove('closed');
+    bk.appendChild(leaf);
+    App.hydrateAssets(bk);
+    const from = Number(leaf.dataset.from);
+    leaf.style.transform = `rotateY(${from}deg)`;
+    turning = {
+      dir, to, leaf, from, target,
+      set(p) { leaf.style.transition = 'none'; leaf.style.transform = `rotateY(${from + (target - from) * p}deg)`; leaf.style.setProperty('--sh', Math.sin(Math.PI * p).toFixed(3)); },
+      finish(ok) {
+        leaf.style.transition = 'transform .55s cubic-bezier(.25,.7,.3,1)';
+        void leaf.offsetWidth;
+        leaf.style.transform = `rotateY(${ok ? target : from}deg)`;
+        leaf.style.setProperty('--sh', 0);
+        let done = false;
+        const end = () => {
+          if (done) return; done = true;
+          turning = null;
+          if (ok) {
+            ui.dkSpread = to;
+            const first = spreadAt(to).find((p) => p && !p.cover && !p.blank);
+            if (first) ui.diaryId = first.id;
+          }
+          App.renderMain();
+        };
+        leaf.addEventListener('transitionend', end, { once: true });
+        setTimeout(end, 700);
+      }
+    };
+    return turning;
+  }
+  function turn(dir) { const tt = startTurn(dir); if (tt) requestAnimationFrame(() => tt.finish(true)); }
+
+  // 손가락/마우스로 끌어서 넘기기
+  let pull = null;
+  document.addEventListener('pointerdown', (ev) => {
+    if (App.ui.view !== 'diary' || ui.dkView !== 'book' || ev.button > 0 || turning) return;
+    const wrap = ev.target.closest && ev.target.closest('#bkWrap');
+    if (!wrap || ev.target.closest('button, a, input, select')) return;
+    pull = { x: ev.clientX, y: ev.clientY, tt: null, w: (App.$('#bkR') || wrap).getBoundingClientRect().width };
+  });
+  document.addEventListener('pointermove', (ev) => {
+    if (!pull) return;
+    const dx = ev.clientX - pull.x, dy = ev.clientY - pull.y;
+    if (!pull.tt) {
+      if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy)) return;
+      pull.tt = startTurn(dx < 0 ? 1 : -1);
+      if (!pull.tt) { pull = null; return; }
+    }
+    ev.preventDefault();
+    const p = Math.max(0, Math.min(1, (pull.tt.dir > 0 ? -dx : dx) / (pull.w * 1.1)));
+    pull.p = p; pull.tt.set(p);
+  }, { passive: false });
+  const pullEnd = () => { if (!pull) return; const p = pull; pull = null; if (p.tt) p.tt.finish((p.p || 0) > 0.28); };
+  document.addEventListener('pointerup', pullEnd);
+  document.addEventListener('pointercancel', pullEnd);
+  document.addEventListener('keydown', (ev) => {
+    if (App.ui.view !== 'diary' || ui.dkView !== 'book') return;
+    if (ev.target.closest && ev.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (App.$('#modalLayer') && !App.$('#modalLayer').hidden) return;
+    if (ev.key === 'ArrowRight') { ev.preventDefault(); turn(1); }
+    if (ev.key === 'ArrowLeft') { ev.preventDefault(); turn(-1); }
+  });
+
+  /* 표지 꾸미기 */
+  function coverModal() {
+    const c = coverOf();
+    App.openModal(`<h3 class="modal-title">${t('bk.coverEdit')}</h3>
+      <div class="bk-cover-edit">
+        <div class="bk-cover-prev">${coverHTML()}</div>
+        <div class="stack-s">
+          <label class="field"><span class="label">${t('bk.coverTitle')}</span><input class="input" maxlength="30" value="${esc(c.title)}" placeholder="${esc(t('bk.coverTitlePh'))}" data-input="bk-cover-title"></label>
+          <span class="label">${t('bk.coverColor')}</span>
+          <div class="color-row">${COVER_COLORS.map((x) => `<button type="button" class="swatch ${c.color === x ? 'on' : ''}" style="--c:${x}" data-act="bk-cover-color" data-v="${x}" aria-label="${x}"></button>`).join('')}<input type="color" value="${esc(c.color)}" data-input="bk-cover-color-in" aria-label="${t('bk.coverColor')}"></div>
+          <span class="label">${t('bk.coverImg')}</span>
+          <div class="row gap-xs wrap">
+            <button class="btn small" data-act="bk-cover-img">${svg('upload')}${c.image ? t('bk.coverImgChange') : t('bk.coverImgAdd')}</button>
+            ${c.image ? `<button class="link-btn" data-act="bk-cover-img-del">${t('bk.coverImgDel')}</button>` : ''}
+          </div>
+          ${c.image ? `<div class="seg small">${['full', 'frame'].map((f) => `<button type="button" data-act="bk-cover-fit" data-v="${f}" aria-pressed="${c.fit === f}">${t('bk.fit.' + f)}</button>`).join('')}</div>` : ''}
+        </div>
+      </div>
+      <div class="modal-actions"><span></span><button class="btn primary" data-act="modal-close">${t('bk.done')}</button></div>`, null, 'small');
+    App.hydrateAssets(App.$('#modalLayer'));
+  }
+  function setCover(patch, reopen = true) {
+    App.silent((d) => { d.diaryCover = Object.assign({}, coverOf(), d.diaryCover || {}, patch); });
+    const pv = App.$('.bk-cover-prev'); if (pv) { pv.innerHTML = coverHTML(); App.hydrateAssets(pv); }
+    if (reopen) coverModal();
+  }
+
+  function goBook(id) {
+    cleanup(null);
+    ui.dkSel = null; ui.dkView = 'book';
+    if (id && D().diary.some((x) => x.id === id)) { ui.diaryId = id; ui.dkSpread = spreadOf(id); ui.dkSingle = single(); }
+    App.ui.view === 'diary' ? App.renderMain() : App.go('diary');
+  }
+  function newPage(date) {
+    if (dayCount(date) >= DAY_MAX) { App.toast(t('bk.dayFull')); return null; }
+    const e = newEntry(date);
+    cleanup(e.id);
+    ui.diaryId = e.id; ui.dkSel = null; ui.dkView = 'edit';
+    App.ui.view === 'diary' ? App.renderMain() : App.go('diary');
+    return e;
+  }
+  App.I['bk-cover-title'] = (el) => setCover({ title: el.value }, false);
+  App.I['bk-cover-color-in'] = (el) => setCover({ color: el.value }, false);
+  App.C['bk-jump'] = (el) => {
+    const v = el.value; if (!v) return;
+    const list = pagesAsc();
+    const hit = list.find((x) => x.date >= v) || list[list.length - 1];
+    if (!hit) return;
+    if (hit.date !== v) App.toast(t('bk.jumpNear'));
+    goBook(hit.id);
+  };
+  Object.assign(App.A, {
+    'bk-turn': (el) => turn(Number(el.dataset.d)),
+    'bk-edit': (el) => { ui.diaryId = el.dataset.id; ui.dkSel = null; ui.dkView = 'edit'; App.renderMain(); },
+    'bk-new': () => newPage(todayStr()),
+    'bk-same': (el) => newPage(el.dataset.date),
+    'bk-cover': coverModal,
+    'bk-cover-color': (el) => setCover({ color: el.dataset.v }),
+    'bk-cover-fit': (el) => setCover({ fit: el.dataset.v }),
+    'bk-cover-img': async () => {
+      const files = await App.pickFiles('image/*', false);
+      const f = files && files[0]; if (!f) return;
+      const blob = await Assets.shrinkImage(f, 1600, f.type === 'image/png');
+      const id = 'c_' + uid();
+      await Assets.put(id, blob);
+      const old = coverOf().image;
+      setCover({ image: id });
+      if (old) Assets.del(old);
+      if (App.ui.view === 'diary' && ui.dkView === 'book') { App.renderMain(); coverModal(); }
+    },
+    'bk-cover-img-del': () => { const old = coverOf().image; setCover({ image: '' }); if (old) Assets.del(old); },
+    'bk-export': () => {
+      const ents = spreadAt(ui.dkSpread).filter((p) => p && !p.cover && !p.blank);
+      if (!ents.length) return;
+      App.openModal(`<h3 class="modal-title">${t('bk.exportTitle')}</h3>
+        <p class="hint">${t('bk.exportHint')}</p>
+        <div class="bk-exp">${ents.map((p, i) => `<div class="bk-exp-row"><span><b>${ents.length > 1 ? (i === 0 && !single() ? t('bk.left') : t('bk.right')) + ' · ' : ''}</b>${dayLabel(p)}</span>
+          <span class="row gap-xs"><button class="btn small" data-act="bk-exp-go" data-id="${p.id}" data-how="copy">${svg('copy')}${t('dk.copyImg')}</button><button class="btn small primary" data-act="bk-exp-go" data-id="${p.id}" data-how="save">${svg('down')}${t('dk.saveImg')}</button></span></div>`).join('')}</div>
+        <div class="modal-actions"><span></span><button class="btn" data-act="modal-close">${t('c.close')}</button></div>`, null, 'small');
+    },
+    'bk-exp-go': async (el) => {
+      const node = App.$('#bkp-' + el.dataset.id);
+      const e = D().diary.find((x) => x.id === el.dataset.id);
+      App.closeModal({ noRender: true });
+      if (!node || !e) return;
+      await App.exportNode(node, el.dataset.how, `${t('nav.diary')}-${e.date}.png`, { pixelRatio: 2, width: PAGE_W, height: PAGE_H });
+    }
+  });
+
   App.VIEWS.diary = function () {
-    if (ui.dkView === 'list' || !cur()) { ui.dkView = 'list'; return listView(); }
+    if (ui.dkView !== 'edit' || !cur()) { ui.dkView = 'book'; return bookView(); }
     const e = cur();
-    if (ui.dkView === 'read') return readView(e);
     ensureShape(e);
     if (hist.id !== e.id) histCommit(true);
     const dark = e.paperColor === '#26282e';
@@ -415,7 +660,7 @@
     <section class="view diary-view">
       <header class="view-head dk-bar">
         <div class="row gap-xs wrap">
-          <button class="btn small ghost" data-act="dk-back">${svg('left')}${t('diary.list')}</button>
+          <button class="btn small ghost" data-act="dk-back">${svg('left')}${t('bk.backBook')}</button>
           <input type="date" class="input date-input" data-change="diary-date" value="${e.date}" aria-label="${t('c.date')}">
           <select class="input select emoji-select" data-change="diary-mood" aria-label="${t('diary.mood')}"><option value="">${t('diary.mood')}</option>${MOODS.map((m) => `<option ${e.mood === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
           <select class="input select emoji-select" data-change="diary-weather" aria-label="${t('diary.weather')}"><option value="">${t('diary.weather')}</option>${WEATHERS.map((m) => `<option ${e.weather === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
@@ -456,26 +701,14 @@
     scale.style.height = PAGE_H * s + 'px';
     scale.style.width = PAGE_W * s + 'px';
   }
-  function fitRead() {
-    const stage = App.$('#dkReadStage'), scale = App.$('#dkReadScale'), page = App.$('#dkRead');
-    if (!stage || !scale || !page) return;
-    const s = Math.min(1, stage.clientWidth / PAGE_W);
-    page.style.transform = `scale(${s})`;
-    scale.style.height = PAGE_H * s + 'px';
-    scale.style.width = PAGE_W * s + 'px';
-  }
-  function fitThumbs() {
-    App.$$('.dk-thumb').forEach((th) => { const pg = th.firstElementChild; if (pg) pg.style.transform = `scale(${th.clientWidth / PAGE_W})`; });
-  }
   App.after.diary = function () {
-    if (ui.dkView === 'list') { fitThumbs(); App.hydrateAssets(App.$('#main')); return; }
-    if (ui.dkView === 'read') { fitRead(); App.hydrateAssets(App.$('#main')); return; }
+    if (ui.dkView === 'book') { fitBook(); App.hydrateAssets(App.$('#main')); return; }
     if (!cur()) return;
     fitPage();
     renderItems();
     undoBtns();
   };
-  window.addEventListener('resize', () => { if (App.ui.view !== 'diary') return; if (ui.dkView === 'list') fitThumbs(); else if (ui.dkView === 'read') fitRead(); else fitPage(); });
+  window.addEventListener('resize', () => { if (App.ui.view !== 'diary') return; if (ui.dkView === 'book') { if (ui.dkSingle !== single()) App.renderMain(); else fitBook(); } else fitPage(); });
 
   /* ---------- 끌기·크기·회전 ---------- */
   let drag = null;
@@ -658,19 +891,19 @@
   }
 
   function newEntry(date) {
-    const e = ensureShape({ id: uid(), date, layout: 'free', title: '', body: '', mood: '', weather: '', font: '', size: 22, color: '', paper: 'lined', paperColor: '#ffffff', items: [], updatedAt: nowISO() });
+    const e = ensureShape({ id: uid(), date, layout: 'free', title: '', body: '', mood: '', weather: '', font: '', size: 22, color: '', paper: 'lined', paperColor: '#ffffff', items: [], made: nowISO(), updatedAt: nowISO() });
     App.silent((d) => d.diary.push(e));
     return e;
   }
   App.writeDiary = function (date) {
     // 그 날짜에 쓴 게 있으면 가장 최근 것을 열고, 없으면 새로
     let e = D().diary.filter((x) => x.date === date).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0];
-    const isNew = !e;
-    if (!e) e = newEntry(date);
+    if (e) { goBook(e.id); return; }
+    e = newEntry(date);
     cleanup(e.id);
     ui.diaryId = e.id;
     ui.dkSel = null;
-    ui.dkView = isNew ? 'edit' : 'read';
+    ui.dkView = 'edit';
     App.go('diary');
     setTimeout(() => { const b = App.$('.dk-body'); if (b && !b.value && ui.dkMode === 'write') b.focus(); }, 0);
   };
@@ -680,13 +913,13 @@
     });
   }
   App.onLeave = App.onLeave || {};
-  App.onLeave.diary = () => { ui.dkSel = null; cleanup(null); ui.dkView = 'list'; };
-  // 왼쪽 메뉴의 다이어리를 누르면 항상 목록부터
+  App.onLeave.diary = () => { ui.dkSel = null; cleanup(null); ui.dkView = 'book'; ui.dkSpread = null; };
+  // 왼쪽 메뉴의 다이어리를 누르면 가장 최근 장이 펼쳐진 책으로
   const prevNav = App.A.nav;
-  App.A.nav = (el) => { if (el && el.dataset.view === 'diary') { if (App.ui.view === 'diary') { cleanup(null); ui.dkSel = null; } ui.dkView = 'list'; } return prevNav(el); };
+  App.A.nav = (el) => { if (el && el.dataset.view === 'diary') { if (App.ui.view === 'diary') { cleanup(null); ui.dkSel = null; } ui.dkView = 'book'; ui.dkSpread = null; ui.diaryId = null; } return prevNav(el); };
 
   async function exportPage(how) {
-    const page = App.$('#dkPage') || App.$('#dkRead');
+    const page = App.$('#dkPage');
     if (!page) return;
     if (page.id === 'dkPage') { ui.dkSel = null; renderItems(); }
     const fields = App.$$('.dk-title, .dk-body', page);
@@ -708,7 +941,9 @@
     'diary-new': (el) => {
       const prev = cur();
       if (prev) touch();
-      const e = newEntry((el && el.dataset.date) || todayStr());
+      const date = (el && el.dataset.date) || todayStr();
+      if (dayCount(date) >= DAY_MAX) { App.toast(t('bk.dayFull')); return; }
+      const e = newEntry(date);
       cleanup(e.id);
       ui.diaryId = e.id; ui.dkSel = null; ui.dkView = 'edit';
       App.ui.view === 'diary' ? App.renderMain() : App.go('diary');
@@ -717,9 +952,8 @@
     'diary-open': (el) => {
       if (!el.dataset.id) return;
       cleanup(el.dataset.id);
-      ui.diaryId = el.dataset.id; ui.dkSel = null; ui.dkView = 'read';
       App.closeModal({ noRender: true });
-      App.ui.view === 'diary' ? App.renderMain() : App.go('diary');
+      goBook(el.dataset.id);
     },
     'diary-del': async () => {
       const e = cur();
@@ -728,31 +962,16 @@
         const files = [...(e.items || []).filter((i) => i.type === 'photo').map((i) => i.assetId), e.bgImage].filter(Boolean);
         App.update((d) => { d.diary = d.diary.filter((x) => x.id !== e.id); });
         files.forEach((id) => { if (!D().diary.some((d) => d.bgImage === id || (d.items || []).some((i) => i.assetId === id))) Assets.del(id); });
-        ui.diaryId = null; ui.dkView = 'list';
+        ui.diaryId = null; ui.dkView = 'book'; ui.dkSpread = null;
         App.renderMain();
         App.toast(t('c.deleted'));
       }
     },
-    'diary-list': () => {
-      const list = sorted();
-      let last = '';
-      App.openModal(`<h3 class="modal-title">${t('diary.list')}</h3>
-        <ul class="diary-list">${list.map((x) => {
-          const mon = x.date.slice(0, 7);
-          const head = mon !== last ? `<li class="group-label">${fmt(x.date, { year: 'numeric', month: 'long' })}</li>` : '';
-          last = mon;
-          return head + `<li><button type="button" data-act="diary-open" data-id="${x.id}" aria-current="${x.id === ui.diaryId}"><span class="dd">${App.parse(x.date).getDate()}</span><span>${esc(x.mood || '·')}</span><span class="tt">${esc(x.title || (x.body || '').slice(0, 30) || t('c.untitled'))}</span></button></li>`;
-        }).join('')}</ul>
-        <div class="modal-actions"><span></span><button class="btn" data-act="modal-close">${t('c.close')}</button></div>`, null, 'small');
-    },
-    'dk-back': () => { if (ui.dkView === 'edit') { touch(); histCommit(true); } cleanup(null); ui.dkSel = null; ui.dkView = 'list'; App.renderMain(); },
-    'dk-edit': () => { ui.dkView = 'edit'; ui.dkSel = null; App.renderMain(); },
+    'dk-back': () => { const e = cur(); if (ui.dkView === 'edit') { touch(); histCommit(true); } goBook(e && e.id); },
     'dk-done': () => {
-      touch(); histCommit(true); ui.dkSel = null;
+      touch(); histCommit(true);
       const e = cur();
-      cleanup(null);
-      ui.dkView = e && D().diary.some((x) => x.id === e.id) ? 'read' : 'list';
-      App.renderMain(); App.toast(t('diary.saved'));
+      goBook(e && e.id); App.toast(t('diary.saved'));
     },
     'dk-add-tpl': (el) => {
       const e = cur();
