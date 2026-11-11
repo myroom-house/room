@@ -21,9 +21,10 @@
             <div class="row gap-xs"><button class="btn" data-act="export">${t('set.export')}</button><button class="btn" data-act="import">${t('set.import')}</button></div></div>
           <p class="hint">${t('set.backupHelp')}</p>
         </div>
+        ${App.feedbackCard ? App.feedbackCard() : ''}
         ${Store.desktop ? `<div class="card set-row"><h3>${t('set.folder')}</h3><button class="btn" data-act="open-folder">${t('set.openFolder')}</button></div>` : ''}
         <div class="card set-row"><h3>${t('set.reset')}</h3><button class="btn danger" data-act="reset">${t('set.reset')}</button></div>
-        <p class="muted small">MyRoom v0.6.1</p>
+        <p class="muted small set-ver">MyRoom v0.6.1</p>
       </div>
     </section>`;
   };

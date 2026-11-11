@@ -1316,3 +1316,5 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
 .bk-tstyle .color-row { min-height: 38px; }
 .bk-tstyle { flex-direction: column; align-items: stretch; gap: 10px; }
 .bk-cover::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 22px; background: linear-gradient(90deg, rgba(0,0,0,.18), rgba(0,0,0,.05) 80%, rgba(255,255,255,.12)); pointer-events: none; z-index: 2; }
+.fb-text { width: 100%; resize: vertical; min-height: 110px; line-height: 1.6; }
+.check-line { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); cursor: pointer; }
