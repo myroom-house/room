@@ -324,7 +324,7 @@
       </section>
       <section class="so-box so-line">
         <h4>${t('so.line')}</h4>
-        <p><span class="so-mood">${esc((d.line && d.line.mood) || '')}</span>${esc((d.line && d.line.text) || '') || `<span class="so-empty">${t('so.noLine')}</span>`}</p>
+        <p>${esc((d.line && d.line.text) || '') || `<span class="so-empty">${t('so.noLine')}</span>`}</p>
       </section>
       ${d.pair && d.pair.url ? `<section class="so-box so-pair"><img src="${esc(App.safeImg(d.pair.url))}" alt=""></section>` : ''}
       ${banners.length ? `<section class="so-box"><h4>${t('so.banners')}</h4><div class="so-banners">${banners.map((b) => { const img = App.safeImg(b.p.banner_url); return `<button type="button" class="so-banner ${img ? 'img' : ''}" data-act="so-visit" data-id="${esc(b.id)}" title="${esc(b.p.name)} @${esc(b.p.handle)}">${img ? `<img src="${esc(img)}" alt="${esc(b.p.name)}">` : `${avatar(b.p)}<span>${esc(b.p.name)}</span>`}</button>`; }).join('')}</div></section>` : ''}
@@ -359,10 +359,9 @@
       <div class="card so-react-tools">
         <h3>${t('so.react')}</h3>
         <p class="hint" style="margin-top:0">${ui.so.place ? t('so.placeNow') : t('so.reactHint')}</p>
-        <div class="emoji-grid small">${REACT_EMOJI.map((e) => `<button type="button" data-act="so-pick" data-emoji="${e}" aria-pressed="${ui.so.place && ui.so.place.emoji === e}">${e}</button>`).join('')}</div>
-        ${App.D.stickers.length ? `<div class="sticker-grid">${App.D.stickers.map((s) => `<div class="sticker-cell"><button type="button" class="sticker-btn" data-act="so-pick" data-asset="${esc(s.assetId)}" aria-pressed="${ui.so.place && ui.so.place.asset === s.assetId}"><img data-asset="${esc(s.assetId)}" alt=""></button></div>`).join('')}</div>` : ''}
-        <button class="btn small" data-act="so-pick-photo">${svg('image')}${t('so.photoSticker')}</button>
-        ${ui.so.place ? `<button class="btn small ghost" data-act="so-pick-cancel">${t('c.cancel')}</button>` : ''}
+        ${App.stickerFolderBar && App.D.stickers.length ? App.stickerFolderBar('diary') : ''}
+        ${App.stickersInView().length ? `<div class="sticker-grid so-lib">${App.stickersInView().map((s) => `<div class="sticker-cell" data-stk-drag="${s.id}"><button type="button" class="sticker-btn" data-act="so-pick" data-asset="${esc(s.assetId)}" aria-pressed="${ui.so.place && ui.so.place.asset === s.assetId}" title="${esc(s.name || '')}"><img data-asset="${esc(s.assetId)}" alt=""></button></div>`).join('')}</div>` : `<p class="hint">${App.D.stickers.length ? t('stk.emptyFolder') : t('so.libEmpty')}</p>`}
+        <div class="row gap-xs wrap"><button class="btn small" data-act="so-lib-upload">${svg('upload')}${t('hs.upload')}</button>${ui.so.place ? `<button class="btn small ghost" data-act="so-pick-cancel">${t('c.cancel')}</button>` : ''}</div>
         ${mine.length ? '' : ''}
       </div>`;
   }
@@ -392,14 +391,14 @@
           <ul class="item-list">${d.todos.items.map((x, i) => `<li class="item ${x.done ? 'done' : ''}"><input type="checkbox" class="check" data-change="so-todo-toggle" data-i="${i}" ${x.done ? 'checked' : ''}><span class="txt">${esc(x.text)}</span><button class="icon-btn" data-act="so-todo-del" data-i="${i}" aria-label="${t('c.delete')}">${svg('x')}</button></li>`).join('')}</ul>
           <input class="input quick" data-enter="so-todo-add" placeholder="${esc(t('task.todoPh'))}">`}`)}
       ${sec(t('so.line'), `
-        <div class="row gap-xs"><select class="input select emoji-select" data-change="so-set" data-k="line.mood">${MOODS.map((m) => `<option ${d.line.mood === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
-        <input class="input grow" maxlength="80" value="${esc(d.line.text)}" placeholder="${esc(t('so.linePh'))}" data-input="so-set" data-k="line.text"></div>`)}
+        <div class="row gap-xs"><input class="input grow" maxlength="80" value="${esc(d.line.text)}" placeholder="${esc(t('so.linePh'))}" data-input="so-set" data-k="line.text"></div>`)}
       ${sec(t('so.pair'), `
         ${d.pair.url ? `<img class="so-pair-prev" src="${esc(App.safeImg(d.pair.url))}" alt="">` : ''}
         <div class="row gap-xs"><button class="btn small" data-act="so-pair-upload">${svg('image')}${d.pair.url ? t('cc.bgChange') : t('so.pairUpload')}</button>${d.pair.url ? `<button class="btn small ghost" data-act="so-pair-del">${t('c.delete')}</button>` : ''}</div>`)}
       ${sec(t('so.stickers'), `
-        <div class="emoji-grid small">${STICKER_EMOJI.map((e) => `<button type="button" data-act="so-st-emoji" data-v="${e}">${e}</button>`).join('')}</div>
-        <div class="row gap-xs wrap"><button class="btn small" data-act="so-st-photo">${svg('image')}${t('so.photoSticker')}</button></div>
+        ${App.stickerFolderBar && App.D.stickers.length ? App.stickerFolderBar('diary') : ''}
+        ${App.stickersInView().length ? `<div class="sticker-grid so-lib">${App.stickersInView().map((s) => `<div class="sticker-cell" data-stk-drag="${s.id}"><button type="button" class="sticker-btn" data-act="so-st-lib" data-asset="${esc(s.assetId)}"  title="${esc(s.name || '')}"><img data-asset="${esc(s.assetId)}" alt=""></button></div>`).join('')}</div>` : `<p class="hint">${App.D.stickers.length ? t('stk.emptyFolder') : t('so.libEmpty')}</p>`}
+        <div class="row gap-xs wrap"><button class="btn small" data-act="so-lib-upload">${svg('upload')}${t('hs.upload')}</button></div>
         <div class="tip">${t('so.stTip')}</div>
         ${ui.so.selSt ? (() => { const s = d.stickers.find((x) => x.id === ui.so.selSt); return s ? `<div class="sub-box"><b>${t('dk.selected')}</b><label><span class="label">${t('dk.rotate')}</span><div class="range-row"><input type="range" min="-180" max="180" value="${s.r || 0}" data-input="so-st-rot"><output>${s.r || 0}°</output></div></label></div>` : ''; })() : ''}`)}
       ${sec(t('so.bg'), `
@@ -754,6 +753,16 @@
     'so-pair-upload': busy(async () => { const url = await uploadImage(1200, false); if (url) { S().draft.pair.url = url; dirty(); App.renderMain(); } }),
     'so-pair-del': () => { S().draft.pair.url = ''; dirty(); App.renderMain(); },
     'so-todo-del': (el) => { S().draft.todos.items.splice(Number(el.dataset.i), 1); dirty(); App.renderMain(); },
+    'so-st-lib': busy(async (el) => {
+      const url = await uploadAsset(el.dataset.asset);
+      if (!url) return;
+      const s = { id: uid(), url, x: 50 + Math.random() * 30 - 15, y: 30 + Math.random() * 30, w: 110, r: Math.round(Math.random() * 16 - 8) };
+      S().draft.stickers.push(s); ui.so.selSt = s.id; dirty(); App.renderMain();
+    }),
+    'so-lib-upload': async () => {
+      const added = await App.uploadStickers();
+      if (added.length) { App.renderMain(); App.toast(t('dk.stickersAdded', { n: added.length })); }
+    },
     'so-st-emoji': (el) => { const s = { id: uid(), emoji: el.dataset.v, x: 50 + Math.random() * 30 - 15, y: 30 + Math.random() * 30, w: 64, r: Math.round(Math.random() * 24 - 12) }; S().draft.stickers.push(s); ui.so.selSt = s.id; dirty(); App.renderMain(); },
     'so-st-photo': busy(async () => {
       const url = await uploadImage(600, true);
@@ -898,7 +907,7 @@
     'so-set': (el) => {
       setPath(S().draft, el.dataset.k, el.value); dirty();
       const page = App.$('#soPage'); if (!page) return;
-      if (el.dataset.k === 'line.text') { const p = page.querySelector('.so-line p'); if (p) p.innerHTML = `<span class="so-mood">${esc(S().draft.line.mood)}</span>${esc(el.value)}`; }
+      if (el.dataset.k === 'line.text') { const p = page.querySelector('.so-line p'); if (p) p.textContent = el.value; }
       if (el.dataset.k === 'pair.caption') { const p = page.querySelector('.so-pair p'); if (p) p.textContent = el.value; }
     },
     'so-st-rot': (el) => {

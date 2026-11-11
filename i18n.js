@@ -534,7 +534,7 @@ window.I18N = {
   'so.pt.grid': ['모눈', 'Grid', '方眼'],
   'so.pt.check': ['체크', 'Check', 'チェック'],
   'so.pt.heart': ['하트', 'Hearts', 'ハート'],
-  'so.banners': ['이웃 배너', 'Neighbor banners', 'おとなりバナー'],
+  'so.banners': ['이웃', 'Neighbor banners', 'おとなりバナー'],
   'so.bannersTip': '켜 둔 이웃이 내 페이지에 배너로 걸려요. 배너 이미지는 이웃이 직접 올린 것으로 보이고, 누르면 그 이웃 페이지로 가요',
   'so.noFriendsYet': ['이웃이 생기면 배너로 걸 수 있어요', 'Add neighbors to show their banners', 'おとなりができたらバナーにできます'],
   'so.publish': ['이웃에게 게시', 'Publish', '公開する'],
@@ -911,5 +911,6 @@ window.I18N = {
   'wn.all': '지난 소식 전체 보기',
   'wn.tag.new': '새 기능',
   'wn.tag.better': '개선',
-  'wn.tag.fix': '고침'
+  'wn.tag.fix': '고침',
+  'so.libEmpty': '아직 스티커가 없어요. PNG·GIF를 올리면 다이어리·홈 스티커와 같은 보관함에 들어가요'
 };
