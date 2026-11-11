@@ -395,13 +395,14 @@
   const DAY_MAX = 2;
   const dayCount = (date) => bookPages(curBook().id).filter((x) => x.date === date).length;
   const coverOf = (b) => Object.assign({}, BOOK_DEF, b || curBook());
+  const TITLE_COLORS = ['#ffffff', '#2b2b2b', '#f6e7c8', '#c9a46a'];
   const COVER_COLORS = ['#8a9bb0', '#2f4a6b', '#c95d6e', '#e9b8c4', '#4f7d6a', '#b8d4c6', '#c49a5c', '#efe3cc', '#6d5a8a', '#2b2b2b'];
 
   function coverHTML(b) {
     const c = coverOf(b);
     return `<div class="bk-cover fit-${esc(c.fit)}" style="--cv:${App.safeColor(c.color)}">
       ${c.image ? `<div class="bk-cover-img"><img data-asset="${esc(c.image)}" alt=""></div>` : ''}
-      ${c.title ? `<div class="bk-cover-title">${esc(c.title)}</div>` : ''}
+      ${c.title ? `<div class="bk-cover-title" style="color:${App.safeColor(c.titleColor || '#ffffff')};font-family:${App.fontFamily(c.titleFont || '')}">${esc(c.title)}</div>` : ''}
     </div>`;
   }
   function blankHTML() {
@@ -610,6 +611,10 @@
         <div class="bk-cover-prev">${coverHTML()}</div>
         <div class="stack-s">
           <label class="field"><span class="label">${t('bk.coverTitle')}</span><input class="input" maxlength="30" value="${esc(c.title)}" placeholder="${esc(t('bk.coverTitlePh'))}" data-input="bk-cover-title"></label>
+          <div class="row gap-xs wrap bk-tstyle">
+            <label class="field grow"><span class="label">${t('bk.titleFont')}</span><select class="input select" data-change="bk-cover-font">${App.fontOptions(c.titleFont || '')}</select></label>
+            <label class="field"><span class="label">${t('bk.titleColor')}</span><span class="color-row">${TITLE_COLORS.map((x) => `<button type="button" class="swatch ${(c.titleColor || '#ffffff') === x ? 'on' : ''}" style="--c:${x}" data-act="bk-title-color" data-v="${x}" aria-label="${x}"></button>`).join('')}<input type="color" value="${esc(c.titleColor || '#ffffff')}" data-input="bk-title-color-in" aria-label="${t('bk.titleColor')}"></span></label>
+          </div>
           <span class="label">${t('bk.coverColor')}</span>
           <div class="color-row">${COVER_COLORS.map((x) => `<button type="button" class="swatch ${c.color === x ? 'on' : ''}" style="--c:${x}" data-act="bk-cover-color" data-v="${x}" aria-label="${x}"></button>`).join('')}<input type="color" value="${esc(c.color)}" data-input="bk-cover-color-in" aria-label="${t('bk.coverColor')}"></div>
           <span class="label">${t('bk.coverImg')}</span>
@@ -647,6 +652,8 @@
   }
   App.I['bk-cover-title'] = (el) => setCover({ title: el.value }, false);
   App.I['bk-cover-color-in'] = (el) => setCover({ color: el.value }, false);
+  App.I['bk-title-color-in'] = (el) => setCover({ titleColor: el.value }, false);
+  App.C['bk-cover-font'] = (el) => setCover({ titleFont: el.value }, false);
   App.C['bk-jump'] = (el) => {
     const v = el.value; if (!v) return;
     const list = pagesAsc();
@@ -686,6 +693,7 @@
     'bk-same': (el) => newPage(el.dataset.date),
     'bk-cover': coverModal,
     'bk-cover-color': (el) => setCover({ color: el.dataset.v }),
+    'bk-title-color': (el) => setCover({ titleColor: el.dataset.v }),
     'bk-cover-fit': (el) => setCover({ fit: el.dataset.v }),
     'bk-cover-img': async () => {
       const files = await App.pickFiles('image/*', false);

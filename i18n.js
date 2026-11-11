@@ -884,5 +884,7 @@ window.I18N = {
   'bk.newTitle': '다이어리 {n}',
   'bk.pages': '{n}장',
   'bk.delBook': '이 다이어리 지우기',
-  'bk.delBookConfirm': '"{t}" 다이어리와 안에 있는 {n}장을 모두 지울까요? 되돌릴 수 없어요.'
+  'bk.delBookConfirm': '"{t}" 다이어리와 안에 있는 {n}장을 모두 지울까요? 되돌릴 수 없어요.',
+  'bk.titleFont': '글씨체',
+  'bk.titleColor': '글씨 색'
 };
