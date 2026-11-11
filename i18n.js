@@ -904,5 +904,12 @@ window.I18N = {
   'fb.offline': '인터넷이 연결돼 있어야 보낼 수 있어요',
   'fb.tooShort': '조금만 더 자세히 적어주세요',
   'fb.wait': '방금 보냈어요. 30초 뒤에 다시 보낼 수 있어요',
-  'fb.notReady': '문의함을 준비하고 있어요.'
+  'fb.notReady': '문의함을 준비하고 있어요.',
+  'wn.kicker': '업데이트',
+  'wn.title': '새로 바뀐 것이 있어요',
+  'wn.ok': '확인했어요',
+  'wn.all': '지난 소식 전체 보기',
+  'wn.tag.new': '새 기능',
+  'wn.tag.better': '개선',
+  'wn.tag.fix': '고침'
 };
