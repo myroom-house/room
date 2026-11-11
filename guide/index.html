@@ -643,7 +643,7 @@
       <p class="lead">새로 생긴 기능이랑 바뀐 점을 여기에 모아둘게요.</p>
 
       <!-- 업데이트 소식은 ../updates.json 에서 불러와요 (앱의 "새로 바뀐 것" 창과 같은 파일) -->
-      <ol class="updates" id="updates">
+      <ol class="updates" id="updateList">
         <li class="card empty">아직 올라온 소식이 없어요. 새 기능이 생기면 여기에 알려드릴게요!</li>
       </ol>
       <button type="button" class="more-btn" hidden>이전 소식 더 보기</button>
@@ -707,7 +707,7 @@
   (function(){
     var SHOW = 3;
     var TAG = { 'new': ['새 기능',''], better: ['개선','better'], fix: ['고침','fix'] };
-    var ol = document.getElementById('updates');
+    var ol = document.getElementById("updateList");
     var btn = document.querySelector('.more-btn');
     function esc(x){ return String(x == null ? '' : x).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
     fetch('../updates.json', { cache: 'no-cache' }).then(function(r){ return r.json(); }).then(function(list){
