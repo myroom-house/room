@@ -32,7 +32,7 @@
   ui.dkTab = 'sticker';
   ui.dkSel = null;
   ui.dkScale = 1;
-  ui.dkView = 'book';        // book: 펼친 다이어리 / edit: 편집
+  ui.dkView = 'shelf';       // shelf: 다이어리 목록(책장) / book: 펼친 다이어리 / edit: 편집
 
   const D = () => App.D;
   const cur = () => D().diary.find((x) => x.id === ui.diaryId);
@@ -360,7 +360,25 @@
   const COVER = { cover: true }, BLANK = { blank: true };
   const single = () => window.innerWidth <= 760;
   const madeOf = (x) => x.made || x.updatedAt || '';
-  const pagesAsc = () => [...D().diary].sort((a, b) => a.date.localeCompare(b.date) || madeOf(a).localeCompare(madeOf(b)) || String(a.id).localeCompare(String(b.id)));
+  /* 다이어리 여러 권 — 예전 장들은 첫 권(main)에 모아요 */
+  const BOOK_DEF = { color: '#8a9bb0', image: '', fit: 'full', title: '' };
+  function books() {
+    const d = D();
+    let changed = false;
+    if (!Array.isArray(d.diaryBooks)) { d.diaryBooks = []; changed = true; }
+    const needMain = !d.diaryBooks.length || d.diary.some((x) => !x.book || !d.diaryBooks.some((b) => b.id === x.book));
+    if (needMain && !d.diaryBooks.some((b) => b.id === 'main')) {
+      d.diaryBooks.unshift(Object.assign({ id: 'main', made: '0' }, BOOK_DEF, d.diaryCover || {}, { title: (d.diaryCover && d.diaryCover.title) || t('bk.firstTitle') }));
+      changed = true;
+    }
+    d.diary.forEach((x) => { if (!x.book || !d.diaryBooks.some((b) => b.id === x.book)) { x.book = 'main'; changed = true; } });
+    if (changed) App.silent(() => {});
+    return d.diaryBooks;
+  }
+  const bookById = (id) => books().find((b) => b.id === id);
+  const curBook = () => bookById(ui.dkBook) || books()[0];
+  const bookPages = (bid) => D().diary.filter((x) => (x.book || 'main') === bid);
+  const pagesAsc = () => [...bookPages(curBook().id)].sort((a, b) => a.date.localeCompare(b.date) || madeOf(a).localeCompare(madeOf(b)) || String(a.id).localeCompare(String(b.id)));
   const bookSeq = () => [...pagesAsc(), BLANK];
   const spreadCount = () => { const n = bookSeq().length; return single() ? n + 1 : 1 + Math.ceil(n / 2); };
   function spreadAt(i) {
@@ -375,12 +393,12 @@
     return single() ? i + 1 : Math.floor(i / 2) + 1;
   }
   const DAY_MAX = 2;
-  const dayCount = (date) => D().diary.filter((x) => x.date === date).length;
-  const coverOf = () => Object.assign({ color: '#8a9bb0', image: '', fit: 'full', title: '' }, D().diaryCover || {});
+  const dayCount = (date) => bookPages(curBook().id).filter((x) => x.date === date).length;
+  const coverOf = (b) => Object.assign({}, BOOK_DEF, b || curBook());
   const COVER_COLORS = ['#8a9bb0', '#2f4a6b', '#c95d6e', '#e9b8c4', '#4f7d6a', '#b8d4c6', '#c49a5c', '#efe3cc', '#6d5a8a', '#2b2b2b'];
 
-  function coverHTML() {
-    const c = coverOf();
+  function coverHTML(b) {
+    const c = coverOf(b);
     return `<div class="bk-cover fit-${esc(c.fit)}" style="--cv:${App.safeColor(c.color)}">
       ${c.image ? `<div class="bk-cover-img"><img data-asset="${esc(c.image)}" alt=""></div>` : ''}
       ${c.title ? `<div class="bk-cover-title">${esc(c.title)}</div>` : ''}
@@ -424,7 +442,8 @@
     return `<section class="view diary-view bk-view">
       <header class="view-head dk-bar">
         <div class="row gap-xs wrap">
-          <h2 class="view-title">${t('nav.diary')}</h2>
+          <button class="btn small ghost" data-act="bk-shelf">${svg('left')}${t('bk.shelf')}</button>
+          <h2 class="view-title bk-title">${esc(curBook().title || t('bk.untitled'))}</h2>
           <input type="date" class="input date-input" data-change="bk-jump" value="${entries[0] ? entries[0].date : todayStr()}" title="${t('bk.jump')}" aria-label="${t('bk.jump')}">
         </div>
         <div class="row gap-xs wrap">
@@ -446,6 +465,29 @@
         <p class="bk-count">${ui.dkSpread === 0 ? t('bk.cover') : `${ui.dkSpread} / ${n - 1}`}<span class="muted small"> · ${t('bk.turnHint')}</span></p>
       </div>
     </section>`;
+  }
+
+  /* 책장: 다이어리 권 목록 */
+  function shelfView() {
+    const bs = [...books()].sort((a, b) => String(a.made || '').localeCompare(String(b.made || '')));
+    return `<section class="view diary-view shelf-view">
+      <header class="view-head"><h2 class="view-title">${t('nav.diary')} <span class="count">${bs.length}</span></h2>
+        <button class="btn primary" data-act="bk-make">${svg('plus')}${t('bk.make')}</button></header>
+      <div class="shelf">
+        ${bs.map((b) => {
+          const ps = bookPages(b.id);
+          const last = ps.map((x) => x.date).sort().slice(-1)[0];
+          return `<button type="button" class="shelf-book" data-act="bk-open" data-id="${esc(b.id)}">
+            <span class="shelf-cover">${coverHTML(b)}</span>
+            <span class="shelf-cap"><b>${esc(b.title || t('bk.untitled'))}</b><span class="muted small">${t('bk.pages', { n: ps.length })}${last ? ' · ' + fmt(last, { month: 'short', day: 'numeric' }) : ''}</span></span>
+          </button>`;
+        }).join('')}
+        <button type="button" class="shelf-book shelf-new" data-act="bk-make"><span class="shelf-cover">${svg('plus')}<b>${t('bk.make')}</b></span></button>
+      </div>
+    </section>`;
+  }
+  function fitShelf() {
+    App.$$('.shelf-cover').forEach((c) => { const cv = c.querySelector('.bk-cover'); if (cv) cv.style.transform = `scale(${c.clientWidth / PAGE_W})`; });
   }
 
   function fitBook() {
@@ -578,11 +620,12 @@
           ${c.image ? `<div class="seg small">${['full', 'frame'].map((f) => `<button type="button" data-act="bk-cover-fit" data-v="${f}" aria-pressed="${c.fit === f}">${t('bk.fit.' + f)}</button>`).join('')}</div>` : ''}
         </div>
       </div>
-      <div class="modal-actions"><span></span><button class="btn primary" data-act="modal-close">${t('bk.done')}</button></div>`, null, 'small');
+      <div class="modal-actions"><button class="link-btn danger" data-act="bk-del-book">${t('bk.delBook')}</button><button class="btn primary" data-act="modal-close">${t('bk.done')}</button></div>`, null, 'small');
     App.hydrateAssets(App.$('#modalLayer'));
   }
   function setCover(patch, reopen = true) {
-    App.silent((d) => { d.diaryCover = Object.assign({}, coverOf(), d.diaryCover || {}, patch); });
+    const id = curBook().id;
+    App.silent((d) => { const b = (d.diaryBooks || []).find((x) => x.id === id); if (b) Object.assign(b, patch, { updatedAt: nowISO() }); });
     const pv = App.$('.bk-cover-prev'); if (pv) { pv.innerHTML = coverHTML(); App.hydrateAssets(pv); }
     if (reopen) coverModal();
   }
@@ -590,7 +633,8 @@
   function goBook(id) {
     cleanup(null);
     ui.dkSel = null; ui.dkView = 'book';
-    if (id && D().diary.some((x) => x.id === id)) { ui.diaryId = id; ui.dkSpread = spreadOf(id); ui.dkSingle = single(); }
+    const e = id && D().diary.find((x) => x.id === id);
+    if (e) { books(); ui.dkBook = e.book || 'main'; ui.diaryId = id; ui.dkSpread = spreadOf(id); ui.dkSingle = single(); }
     App.ui.view === 'diary' ? App.renderMain() : App.go('diary');
   }
   function newPage(date) {
@@ -613,6 +657,30 @@
   };
   Object.assign(App.A, {
     'bk-turn': (el) => turn(Number(el.dataset.d)),
+    'bk-shelf': () => { cleanup(null); ui.dkView = 'shelf'; ui.dkSpread = null; App.renderMain(); },
+    'bk-open': (el) => {
+      ui.dkBook = el.dataset.id; ui.dkView = 'book'; ui.dkSpread = null; ui.diaryId = null; ui.dkSel = null;
+      App.renderMain();
+    },
+    'bk-make': () => {
+      const id = uid();
+      const n = books().length;
+      App.silent((d) => { d.diaryBooks.push(Object.assign({ id, made: nowISO(), updatedAt: nowISO() }, BOOK_DEF, { color: COVER_COLORS[n % COVER_COLORS.length], title: t('bk.newTitle', { n: n + 1 }) })); });
+      ui.dkBook = id; ui.dkView = 'book'; ui.dkSpread = 0; ui.dkSingle = single(); ui.diaryId = null;
+      App.renderMain();
+      coverModal();
+      App.toast(t('bk.made'));
+    },
+    'bk-del-book': async () => {
+      const b = curBook(); if (!b) return;
+      const ps = bookPages(b.id);
+      if (!(await App.confirmBox(t('bk.delBookConfirm', { t: b.title || t('bk.untitled'), n: ps.length }), t('bk.delBook')))) return;
+      const files = [b.image, ...ps.flatMap((e) => [...(e.items || []).filter((i) => i.type === 'photo').map((i) => i.assetId), e.bgImage])].filter(Boolean);
+      App.update((d) => { d.diaryBooks = d.diaryBooks.filter((x) => x.id !== b.id); d.diary = d.diary.filter((x) => (x.book || 'main') !== b.id); });
+      files.forEach((id) => { if (!D().diary.some((x) => x.bgImage === id || (x.items || []).some((i) => i.assetId === id)) && !(D().diaryBooks || []).some((x) => x.image === id)) Assets.del(id); });
+      ui.dkView = 'shelf'; ui.dkBook = null; ui.dkSpread = null;
+      App.closeModal({ noRender: true }); App.renderMain(); App.toast(t('c.deleted'));
+    },
     'bk-edit': (el) => { ui.diaryId = el.dataset.id; ui.dkSel = null; ui.dkView = 'edit'; App.renderMain(); },
     'bk-new': () => newPage(todayStr()),
     'bk-same': (el) => newPage(el.dataset.date),
@@ -650,6 +718,8 @@
   });
 
   App.VIEWS.diary = function () {
+    books();
+    if (ui.dkView === 'shelf') return shelfView();
     if (ui.dkView !== 'edit' || !cur()) { ui.dkView = 'book'; return bookView(); }
     const e = cur();
     ensureShape(e);
@@ -702,13 +772,14 @@
     scale.style.width = PAGE_W * s + 'px';
   }
   App.after.diary = function () {
+    if (ui.dkView === 'shelf') { fitShelf(); App.hydrateAssets(App.$('#main')); return; }
     if (ui.dkView === 'book') { fitBook(); App.hydrateAssets(App.$('#main')); return; }
     if (!cur()) return;
     fitPage();
     renderItems();
     undoBtns();
   };
-  window.addEventListener('resize', () => { if (App.ui.view !== 'diary') return; if (ui.dkView === 'book') { if (ui.dkSingle !== single()) App.renderMain(); else fitBook(); } else fitPage(); });
+  window.addEventListener('resize', () => { if (App.ui.view !== 'diary') return; if (ui.dkView === 'shelf') fitShelf(); else if (ui.dkView === 'book') { if (ui.dkSingle !== single()) App.renderMain(); else fitBook(); } else fitPage(); });
 
   /* ---------- 끌기·크기·회전 ---------- */
   let drag = null;
@@ -891,7 +962,7 @@
   }
 
   function newEntry(date) {
-    const e = ensureShape({ id: uid(), date, layout: 'free', title: '', body: '', mood: '', weather: '', font: '', size: 22, color: '', paper: 'lined', paperColor: '#ffffff', items: [], made: nowISO(), updatedAt: nowISO() });
+    const e = ensureShape({ id: uid(), date, layout: 'free', title: '', body: '', mood: '', weather: '', font: '', size: 22, color: '', paper: 'lined', paperColor: '#ffffff', items: [], made: nowISO(), updatedAt: nowISO(), book: curBook().id });
     App.silent((d) => d.diary.push(e));
     return e;
   }
@@ -899,6 +970,7 @@
     // 그 날짜에 쓴 게 있으면 가장 최근 것을 열고, 없으면 새로
     let e = D().diary.filter((x) => x.date === date).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0];
     if (e) { goBook(e.id); return; }
+    books(); if (!bookById(ui.dkBook)) ui.dkBook = books()[0].id;
     e = newEntry(date);
     cleanup(e.id);
     ui.diaryId = e.id;
@@ -913,10 +985,10 @@
     });
   }
   App.onLeave = App.onLeave || {};
-  App.onLeave.diary = () => { ui.dkSel = null; cleanup(null); ui.dkView = 'book'; ui.dkSpread = null; };
+  App.onLeave.diary = () => { ui.dkSel = null; cleanup(null); ui.dkView = 'shelf'; ui.dkSpread = null; };
   // 왼쪽 메뉴의 다이어리를 누르면 가장 최근 장이 펼쳐진 책으로
   const prevNav = App.A.nav;
-  App.A.nav = (el) => { if (el && el.dataset.view === 'diary') { if (App.ui.view === 'diary') { cleanup(null); ui.dkSel = null; } ui.dkView = 'book'; ui.dkSpread = null; ui.diaryId = null; } return prevNav(el); };
+  App.A.nav = (el) => { if (el && el.dataset.view === 'diary') { if (App.ui.view === 'diary') { cleanup(null); ui.dkSel = null; } ui.dkView = 'shelf'; ui.dkSpread = null; ui.diaryId = null; } return prevNav(el); };
 
   async function exportPage(how) {
     const page = App.$('#dkPage');

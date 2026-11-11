@@ -859,7 +859,7 @@ window.I18N = {
   'bk.jump': '이 날짜로 넘기기',
   'bk.newToday': '새 장',
   'bk.turnHint': '종이를 옆으로 끌거나 ← → 키로 넘겨요',
-  'bk.coverTitle': '표지 글씨',
+  'bk.coverTitle': '다이어리 이름 (표지에 써져요)',
   'bk.coverTitlePh': '예: 2026 다이어리',
   'bk.coverColor': '표지 색',
   'bk.coverImg': '표지 사진',
@@ -875,5 +875,14 @@ window.I18N = {
   'bk.exportHint': '저장할 장을 골라요',
   'bk.left': '왼쪽',
   'bk.right': '오른쪽',
-  'bk.backBook': '다이어리'
+  'bk.backBook': '다이어리',
+  'bk.firstTitle': '나의 다이어리',
+  'bk.untitled': '이름 없는 다이어리',
+  'bk.shelf': '다이어리 목록',
+  'bk.make': '새 다이어리',
+  'bk.made': '새 다이어리를 만들었어요. 표지부터 꾸며볼까요?',
+  'bk.newTitle': '다이어리 {n}',
+  'bk.pages': '{n}장',
+  'bk.delBook': '이 다이어리 지우기',
+  'bk.delBookConfirm': '"{t}" 다이어리와 안에 있는 {n}장을 모두 지울까요? 되돌릴 수 없어요.'
 };

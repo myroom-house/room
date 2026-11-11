@@ -80,7 +80,7 @@
   }
 
   /* ---------- 두 기록 합치기 (같은 항목은 더 나중에 고친 쪽) ---------- */
-  const LISTS = ['todos', 'routines', 'events', 'memos', 'diary', 'excerpts', 'bookmarks', 'ddays', 'fonts', 'stickers', 'eventCats', 'homeStickers', 'stickerFolders'];
+  const LISTS = ['todos', 'routines', 'events', 'memos', 'diary', 'excerpts', 'bookmarks', 'ddays', 'fonts', 'stickers', 'eventCats', 'homeStickers', 'stickerFolders', 'diaryBooks'];
   const stamp = (x) => String((x && (x.updatedAt || x.doneAt || x.createdAt)) || '');
   function unionById(a, b) {
     const out = (a || []).map((x) => x);

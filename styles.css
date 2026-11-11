@@ -1296,3 +1296,18 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
   .bk-cover-edit { grid-template-columns: 1fr; }
   .bk-count .muted { display: none; }
 }
+
+/* 다이어리 책장 */
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 22px; }
+.shelf-book { display: flex; flex-direction: column; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; text-align: left; color: inherit; font: inherit; min-width: 0; }
+.shelf-cover { position: relative; display: block; width: 100%; aspect-ratio: 720 / 1000; border-radius: 4px 10px 10px 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 12px 24px -10px rgba(30,30,50,.35); transition: transform .18s, box-shadow .18s; }
+.shelf-cover .bk-cover { width: 720px; height: 1000px; inset: auto; left: 0; top: 0; transform-origin: 0 0; }
+.shelf-book:hover .shelf-cover { transform: translateY(-4px) rotate(-1deg); box-shadow: 0 4px 8px rgba(0,0,0,.1), 0 18px 30px -10px rgba(30,30,50,.4); }
+.shelf-book:focus-visible .shelf-cover { outline: 2px solid var(--accent); outline-offset: 3px; }
+.shelf-cap { display: flex; flex-direction: column; gap: 1px; padding: 0 2px; }
+.shelf-cap b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shelf-new .shelf-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 2px dashed var(--line-strong, var(--line)); box-shadow: none; background: transparent; color: var(--ink-soft); }
+.shelf-new .shelf-cover .ico { width: 30px; height: 30px; }
+.shelf-new:hover .shelf-cover { border-color: var(--accent); color: var(--accent); box-shadow: none; }
+.bk-title { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) { .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } }
