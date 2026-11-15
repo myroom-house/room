@@ -34,13 +34,14 @@
     const body = m.kind === 'check'
       ? `<div class="memo-check">
           ${m.body ? `<b>${esc(m.body)}</b>` : ''}
-          <ul>${m.items.map((i) => `<li class="${i.done ? 'done' : ''}"><input type="checkbox" class="check" data-change="memo-item-toggle" data-id="${m.id}" data-i="${i.id}" ${i.done ? 'checked' : ''} aria-label="${esc(i.text)}"><span>${esc(i.text)}</span><button class="icon-btn tiny hover-only" data-act="memo-item-del" data-id="${m.id}" data-i="${i.id}" aria-label="${t('c.delete')}">${svg('x')}</button></li>`).join('')}</ul>
+          <ul>${m.items.map((i) => `<li class="${i.done ? 'done' : ''}"><input type="checkbox" class="check" data-change="memo-item-toggle" data-id="${m.id}" data-i="${i.id}" ${i.done ? 'checked' : ''} aria-label="${esc(i.text)}"><span>${esc(i.text)}</span>${i.done ? '' : `<button class="icon-btn tiny hover-only to-today" data-act="memo-to-today" data-id="${m.id}" data-i="${i.id}" title="${t('memo.toToday')}" aria-label="${t('memo.toToday')}">${svg('today')}</button>`}<button class="icon-btn tiny hover-only" data-act="memo-item-del" data-id="${m.id}" data-i="${i.id}" aria-label="${t('c.delete')}">${svg('x')}</button></li>`).join('')}</ul>
         </div>`
       : `<div class="memo-text" data-act="memo-edit" data-id="${m.id}">${m.title ? `<b>${esc(m.title)}</b>\n` : ''}${esc(m.body)}</div>`;
     return `<li class="memo-item ${m.pinned ? 'pinned' : ''} ${allDone(m) ? 'all-done' : ''}">
       ${body}
       <div class="memo-meta">
         ${m.kind === 'check' ? `<span class="muted small">${done}/${m.items.length}</span>` : ''}
+        ${m.kind === 'check' && m.items.some((i) => !i.done) ? `<button class="icon-btn" data-act="memo-to-today" data-id="${m.id}" title="${t('memo.allToToday')}" aria-label="${t('memo.allToToday')}">${svg('today')}</button>` : ''}
         ${App.dueBadge(m)}
         <label class="icon-btn due-btn" title="${t('memo.setDue')}">${svg('calendar')}<input type="date" value="${esc(m.due || '')}" data-change="memo-due" data-id="${m.id}"></label>
         ${m.due ? `<button class="icon-btn" data-act="memo-due-clear" data-id="${m.id}" title="${t('memo.clearDue')}">${svg('x')}</button>` : ''}
@@ -110,6 +111,23 @@
     'memo-pin': (el) => App.update((d) => { const m = findM(d, el.dataset.id); if (m) m.pinned = !m.pinned; }),
     'memo-copy': (el) => { const m = App.D.memos.find((x) => x.id === el.dataset.id); if (m) App.copyText(textOf(m)); },
     'memo-due-clear': (el) => App.update((d) => { const m = findM(d, el.dataset.id); if (m) m.due = ''; }),
+    // 체크리스트 항목을 오늘 할 일로 옮기기 (data-i 없으면 안 끝난 항목 전부)
+    'memo-to-today': (el) => {
+      const id = el.dataset.id, one = el.dataset.i;
+      const m = App.D.memos.find((x) => x.id === id);
+      if (!m || m.kind !== 'check') return;
+      const moving = m.items.filter((i) => !i.done && (!one || i.id === one));
+      if (!moving.length) return;
+      const td = todayStr();
+      let gone = false;
+      App.update((d) => {
+        moving.forEach((i) => d.todos.push({ id: uid(), text: i.text, done: false, date: td, createdAt: nowISO() }));
+        const x = findM(d, id); if (!x) return;
+        x.items = x.items.filter((i) => !moving.some((v) => v.id === i.id));
+        if (!x.items.length && !(x.body || '').trim()) { d.memos = d.memos.filter((y) => y.id !== id); gone = true; }
+      });
+      App.toast(t('memo.movedToday', { n: moving.length }) + (gone ? ' ' + t('memo.emptyRemoved') : ''));
+    },
     'memo-item-del': (el) => App.update((d) => { const m = findM(d, el.dataset.id); if (m) m.items = m.items.filter((i) => i.id !== el.dataset.i); }),
     'memo-del': async (el) => {
       if (await App.confirmBox(t('c.confirmDelete'))) { App.update((d) => { d.memos = d.memos.filter((x) => x.id !== el.dataset.id); }); App.toast(t('c.deleted')); }

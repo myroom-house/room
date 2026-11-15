@@ -912,5 +912,9 @@ window.I18N = {
   'wn.tag.new': '새 기능',
   'wn.tag.better': '개선',
   'wn.tag.fix': '고침',
-  'so.libEmpty': '아직 스티커가 없어요. PNG·GIF를 올리면 다이어리·홈 스티커와 같은 보관함에 들어가요'
+  'so.libEmpty': '아직 스티커가 없어요. PNG·GIF를 올리면 다이어리·홈 스티커와 같은 보관함에 들어가요',
+  'memo.toToday': '오늘 할 일로 옮기기',
+  'memo.allToToday': '안 끝난 항목 전부 오늘 할 일로',
+  'memo.movedToday': '{n}개를 오늘 할 일로 옮겼어요.',
+  'memo.emptyRemoved': '빈 메모는 지웠어요'
 };
