@@ -366,7 +366,7 @@
     const d = D();
     let changed = false;
     if (!Array.isArray(d.diaryBooks)) { d.diaryBooks = []; changed = true; }
-    const needMain = !d.diaryBooks.length || d.diary.some((x) => !x.book || !d.diaryBooks.some((b) => b.id === x.book));
+    const needMain = (!d.diaryBooks.length && !d.settings.booksDeleted) || d.diary.some((x) => !x.book || !d.diaryBooks.some((b) => b.id === x.book));
     if (needMain && !d.diaryBooks.some((b) => b.id === 'main')) {
       d.diaryBooks.unshift(Object.assign({ id: 'main', made: '0' }, BOOK_DEF, d.diaryCover || {}, { title: (d.diaryCover && d.diaryCover.title) || t('bk.firstTitle') }));
       changed = true;
@@ -376,7 +376,7 @@
     return d.diaryBooks;
   }
   const bookById = (id) => books().find((b) => b.id === id);
-  const curBook = () => bookById(ui.dkBook) || books()[0];
+  const curBook = () => bookById(ui.dkBook) || books()[0] || (App.silent((d) => { d.settings.booksDeleted = false; }), books()[0]);
   const bookPages = (bid) => D().diary.filter((x) => (x.book || 'main') === bid);
   const pagesAsc = () => [...bookPages(curBook().id)].sort((a, b) => a.date.localeCompare(b.date) || madeOf(a).localeCompare(madeOf(b)) || String(a.id).localeCompare(String(b.id)));
   const bookSeq = () => [...pagesAsc(), BLANK];
@@ -449,6 +449,7 @@
         </div>
         <div class="row gap-xs wrap">
           ${entries.length ? `<button class="btn small" data-act="bk-export">${svg('down')}${t('dk.saveImg')}</button>` : ''}
+          <button class="icon-btn" data-act="bk-del-book" data-id="${esc(curBook().id)}" title="${t('bk.delBook')}" aria-label="${t('bk.delBook')}">${svg('trash')}</button>
           <button class="btn small primary" data-act="bk-new">${svg('plus')}${t('bk.newToday')}</button>
         </div>
       </header>
@@ -478,10 +479,13 @@
         ${bs.map((b) => {
           const ps = bookPages(b.id);
           const last = ps.map((x) => x.date).sort().slice(-1)[0];
-          return `<button type="button" class="shelf-book" data-act="bk-open" data-id="${esc(b.id)}">
-            <span class="shelf-cover">${coverHTML(b)}</span>
-            <span class="shelf-cap"><b>${esc(b.title || t('bk.untitled'))}</b><span class="muted small">${t('bk.pages', { n: ps.length })}${last ? ' · ' + fmt(last, { month: 'short', day: 'numeric' }) : ''}</span></span>
-          </button>`;
+          return `<div class="shelf-item">
+            <button type="button" class="shelf-book" data-act="bk-open" data-id="${esc(b.id)}">
+              <span class="shelf-cover">${coverHTML(b)}</span>
+              <span class="shelf-cap"><b>${esc(b.title || t('bk.untitled'))}</b><span class="muted small">${t('bk.pages', { n: ps.length })}${last ? ' · ' + fmt(last, { month: 'short', day: 'numeric' }) : ''}</span></span>
+            </button>
+            <button type="button" class="shelf-del" data-act="bk-del-book" data-id="${esc(b.id)}" title="${t('bk.delBook')}" aria-label="${t('bk.delBook')}">${svg('trash')}</button>
+          </div>`;
         }).join('')}
         <button type="button" class="shelf-book shelf-new" data-act="bk-make"><span class="shelf-cover">${svg('plus')}<b>${t('bk.make')}</b></span></button>
       </div>
@@ -672,18 +676,18 @@
     'bk-make': () => {
       const id = uid();
       const n = books().length;
-      App.silent((d) => { d.diaryBooks.push(Object.assign({ id, made: nowISO(), updatedAt: nowISO() }, BOOK_DEF, { color: COVER_COLORS[n % COVER_COLORS.length], title: t('bk.newTitle', { n: n + 1 }) })); });
+      App.silent((d) => { d.settings.booksDeleted = false; d.diaryBooks.push(Object.assign({ id, made: nowISO(), updatedAt: nowISO() }, BOOK_DEF, { color: COVER_COLORS[n % COVER_COLORS.length], title: t('bk.newTitle', { n: n + 1 }) })); });
       ui.dkBook = id; ui.dkView = 'book'; ui.dkSpread = 0; ui.dkSingle = single(); ui.diaryId = null;
       App.renderMain();
       coverModal();
       App.toast(t('bk.made'));
     },
-    'bk-del-book': async () => {
-      const b = curBook(); if (!b) return;
+    'bk-del-book': async (el) => {
+      const b = (el && el.dataset.id && bookById(el.dataset.id)) || curBook(); if (!b) return;
       const ps = bookPages(b.id);
       if (!(await App.confirmBox(t('bk.delBookConfirm', { t: b.title || t('bk.untitled'), n: ps.length }), t('bk.delBook')))) return;
       const files = [b.image, ...ps.flatMap((e) => [...(e.items || []).filter((i) => i.type === 'photo').map((i) => i.assetId), e.bgImage])].filter(Boolean);
-      App.update((d) => { d.diaryBooks = d.diaryBooks.filter((x) => x.id !== b.id); d.diary = d.diary.filter((x) => (x.book || 'main') !== b.id); });
+      App.update((d) => { d.diaryBooks = d.diaryBooks.filter((x) => x.id !== b.id); if (!d.diaryBooks.length) d.settings.booksDeleted = true; d.diary = d.diary.filter((x) => (x.book || 'main') !== b.id); });
       files.forEach((id) => { if (!D().diary.some((x) => x.bgImage === id || (x.items || []).some((i) => i.assetId === id)) && !(D().diaryBooks || []).some((x) => x.image === id)) Assets.del(id); });
       ui.dkView = 'shelf'; ui.dkBook = null; ui.dkSpread = null;
       App.closeModal({ noRender: true }); App.renderMain(); App.toast(t('c.deleted'));
@@ -978,7 +982,7 @@
     // 그 날짜에 쓴 게 있으면 가장 최근 것을 열고, 없으면 새로
     let e = D().diary.filter((x) => x.date === date).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0];
     if (e) { goBook(e.id); return; }
-    books(); if (!bookById(ui.dkBook)) ui.dkBook = books()[0].id;
+    books(); if (!bookById(ui.dkBook)) ui.dkBook = curBook().id;
     e = newEntry(date);
     cleanup(e.id);
     ui.diaryId = e.id;
