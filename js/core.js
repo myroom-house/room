@@ -163,10 +163,18 @@
   App.applyTheme = function () {
     const D = App.D;
     const root = document.documentElement;
-    root.dataset.theme = D.settings.theme in App.THEMES ? D.settings.theme : 'editor';
+    root.dataset.theme = D.settings.themeOff ? 'plain' : (D.settings.theme in App.THEMES ? D.settings.theme : 'editor');
+    const pill = $('#themePill');
+    if (pill) { pill.setAttribute('aria-checked', String(!D.settings.themeOff)); pill.title = D.settings.themeOff ? t('theme.offTip') : t('theme.onTip'); }
     root.lang = D.settings.lang;
     root.style.setProperty('--font-app', D.settings.appFont ? App.fontFamily(D.settings.appFont) : 'var(--font)');
     $('#custom-css').textContent = '';
+  };
+
+  // 알약 버튼: 테마 켜기·끄기 (끄면 꾸밈 없는 화면 + 홈 스티커·디데이 숨김)
+  App.A['theme-toggle'] = () => {
+    App.update((d) => { d.settings.themeOff = !d.settings.themeOff; });
+    App.toast(App.D.settings.themeOff ? t('theme.offToast') : t('theme.onToast'));
   };
 
   /* ---------- HTML 위젯 안전하게 ---------- */
@@ -199,6 +207,8 @@
     document.title = title + ' · MyRoom';
     $('#counter').innerHTML = '';
     $('#quickMemoBtn').innerHTML = `${App.svg('plus')}<span>${t('memo.quick')}</span>`;
+    const pill = $('#themePill');
+    if (pill) { pill.innerHTML = `<span class="tp-track"><span class="tp-knob"></span></span><span class="tp-label">${t('theme.pill')}</span>`; pill.setAttribute('aria-checked', String(!App.D.settings.themeOff)); }
   }
   App.renderTitle = renderTitle;
 

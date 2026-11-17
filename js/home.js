@@ -46,7 +46,7 @@
       </div>`);
     }
 
-    if (on('dday')) {
+    if (on('dday') && !D.settings.themeOff) {
       const ddays = App.sortedDdays().filter(({ x }) => x.pinned);
       if (ddays.length) right.push(`<div class="card">
         <div class="card-head"><h3>${t('nav.dday')}</h3><button class="link-btn" data-act="nav" data-view="dday">${t('c.more')}</button></div>
@@ -75,7 +75,7 @@
 
     return `
     <section class="view home">
-      ${App.homeStickerBar ? App.homeStickerBar() : ''}
+      ${App.homeStickerBar && !D.settings.themeOff ? App.homeStickerBar() : ''}
       <div class="home-body">
       <header class="hello">
         <p class="muted">${fmt(td, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
@@ -84,7 +84,7 @@
         <div class="stack">${left.join('')}</div>
         <div class="stack">${right.join('')}</div>
       </div>
-      ${App.homeStickerLayer ? App.homeStickerLayer() : ''}
+      ${App.homeStickerLayer && !D.settings.themeOff ? App.homeStickerLayer() : ''}
       </div>
     </section>`;
   };

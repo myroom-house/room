@@ -139,7 +139,7 @@
 
   App.C['hs-click'] = (el) => App.silent((d) => { d.settings.stickerClick = el.checked; });
   Object.assign(App.A, {
-    'hs-start': () => { ui.homeDeco = true; App.go('home'); },
+    'hs-start': () => { if (App.D.settings.themeOff) App.silent((d) => { d.settings.themeOff = false; }); App.applyTheme(); ui.homeDeco = true; App.go('home'); },
     'hs-done': () => { ui.homeDeco = false; App.renderMain(); App.toast(t('c.saved')); },
     'hs-pick': pickModal,
     'hs-upload': async () => {

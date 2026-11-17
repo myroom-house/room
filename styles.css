@@ -1340,3 +1340,16 @@ body.stk-dragging, body.stk-dragging * { cursor: grabbing !important; user-selec
 .shelf-del .ico { width: 16px; height: 16px; }
 .shelf-item:hover .shelf-del, .shelf-del:focus-visible { opacity: 1; }
 @media (hover: none) { .shelf-del { opacity: .9; } }
+
+/* 테마 끄기 = 꾸밈 없는 화면 */
+[data-theme="plain"] body { background-image: none !important; }
+/* 알약 스위치 */
+.theme-pill { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 5px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .15s, color .15s; }
+.theme-pill:hover { border-color: var(--accent); color: var(--ink); }
+.theme-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tp-track { position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--line-strong, #cfd3da); transition: background .2s; flex: none; }
+.tp-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+.theme-pill[aria-checked="true"] { color: var(--ink); }
+.theme-pill[aria-checked="true"] .tp-track { background: var(--accent); }
+.theme-pill[aria-checked="true"] .tp-knob { transform: translateX(16px); }
+@media (max-width: 760px) { .theme-pill .tp-label { display: none; } .theme-pill { padding: 0 5px; } }

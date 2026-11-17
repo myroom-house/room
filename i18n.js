@@ -916,5 +916,10 @@ window.I18N = {
   'memo.toToday': '오늘 할 일로 옮기기',
   'memo.allToToday': '안 끝난 항목 전부 오늘 할 일로',
   'memo.movedToday': '{n}개를 오늘 할 일로 옮겼어요.',
-  'memo.emptyRemoved': '빈 메모는 지웠어요'
+  'memo.emptyRemoved': '빈 메모는 지웠어요',
+  'theme.pill': '테마',
+  'theme.onTip': '테마 끄기 (꾸밈 없는 화면, 홈 스티커·디데이 숨김)',
+  'theme.offTip': '테마 다시 켜기',
+  'theme.offToast': '테마를 껐어요. 홈 스티커랑 디데이도 잠깐 숨겼어요',
+  'theme.onToast': '테마를 다시 켰어요'
 };
